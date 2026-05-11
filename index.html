@@ -279,7 +279,7 @@ function TabSV({steuersatz,sv,setSv}) {
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.5rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
           <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.accent,textTransform:"uppercase",marginBottom:"1.1rem",fontFamily:T.mono}}>Berechnung</div>
           {[
-            ["EK ohne Jahresgewinn", num(sv.ek)],
+            ["Eigenkapital ohne Jahresgewinn", num(sv.ek)],
             ["+ Jahresgewinn / -verlust", num(sv.jg)],
             ["− Überbewertete Debitoren / Vorräte / Transitorische Aktiven", -uvAbzug],
             ["+ Überhöhte Rückstellungen / Transitorische Passiven", passivenZuschlag],
