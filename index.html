@@ -251,25 +251,25 @@ function TabSV({steuersatz,sv,setSv}) {
           <Row label="Total Eigenkapital ohne Jahresgewinn" hint="Gemäss Bilanz vor Gewinnverwendung"><Inp value={sv.ek} onChange={set("ek")} /></Row>
           <Row label="Jahresgewinn / -verlust" hint="Gemäss Erfolgsrechnung (negativ = Verlust)"><Inp value={sv.jg} onChange={set("jg")} /></Row>
         </Sec>
-        <Sec title="Umlaufvermögen – überbewertete Positionen" hint="Wenn ja: bitte den Betrag eingeben, um den die Position in der Bilanz überhöht ist. Diese Abzüge senken den Substanzwert.">
-          <Row label="Haben Sie gefährdete Debitoren in Ihrer aktuellen Bilanz?" hint="z.B. Kunden die voraussichtlich nicht zahlen werden – Betrag der uneinbringlichen Forderungen"><Inp value={sv.deb} onChange={set("deb")} /></Row>
-          <Row label="Sind Vorräte oder Waren in Ihrer Bilanz zu hoch bewertet?" hint="z.B. veralteter Lagerbestand, unverkäufliche Waren – Betrag der Wertberichtigung"><Inp value={sv.vor} onChange={set("vor")} /></Row>
-          <Row label="Gibt es angefangene Arbeiten die nicht mehr werthaltig sind?" hint="z.B. Projekte die nicht mehr fertiggestellt oder verrechnet werden können"><Inp value={sv.ang} onChange={set("ang")} /></Row>
-          <Row label="Sind transitorische Aktiven in der Bilanz überhöht ausgewiesen?" hint="z.B. aktive Rechnungsabgrenzungen die nicht mehr benötigt werden oder bereits verbraucht sind"><Inp value={sv.traA} onChange={set("traA")} /></Row>
+        <Sec title="Überbewertete Aktiven" hint="Beträge eingeben, um die einzelne Bilanzpositionen überhöht sind. Diese Abzüge senken den Substanzwert.">
+          <Row label="Gefährdete Debitoren" hint="Kunden die voraussichtlich nicht zahlen werden – Betrag der uneinbringlichen Forderungen"><Inp value={sv.deb} onChange={set("deb")} /></Row>
+          <Row label="Vorräte / Waren zu hoch bewertet" hint="Veralteter Lagerbestand, unverkäufliche Waren – Betrag der Wertberichtigung"><Inp value={sv.vor} onChange={set("vor")} /></Row>
+          <Row label="Angefangene Arbeiten" hint="Projekte die nicht mehr fertiggestellt oder verrechnet werden können"><Inp value={sv.ang} onChange={set("ang")} /></Row>
+          <Row label="Transitorische Aktiven zu hoch" hint="Aktive Rechnungsabgrenzungen die nicht mehr benötigt werden oder bereits verbraucht sind"><Inp value={sv.traA} onChange={set("traA")} /></Row>
         </Sec>
-        <Sec title="Stille Reserven – Anlagevermögen (betrieblich)">
+        <Sec title="Stille Reserven (betrieblich)" hint="Differenz zwischen Buchwert und tatsächlichem Verkehrswert von Maschinen, Fahrzeugen, Einrichtungen.">
           <Row label="Buchwert Anlagevermögen" hint="Maschinen, Fahrzeuge, Einrichtungen"><Inp value={sv.avBw} onChange={set("avBw")} /></Row>
           <Row label="Tatsächlicher Verkehrswert" hint="Geschätzter Marktwert / Wiederbeschaffungswert"><Inp value={sv.avVk} onChange={set("avVk")} /></Row>
           {srAV>0&&<Auto label="→ Stille Reserve" value={srAV} />}
         </Sec>
-        <Sec title="Nicht betriebsnotwendiges Anlagevermögen">
+        <Sec title="Nicht betriebsnotwendiges Vermögen" hint="Vermögen das nicht für den operativen Betrieb gebraucht wird – wird mit 50% Pauschale (inkl. latente Steuern) zugeschlagen.">
           <Row label="Buchwert" hint="z.B. Renditeliegenschaften, überschüssige Liquidität"><Inp value={sv.nbBw} onChange={set("nbBw")} /></Row>
           <Row label="Tatsächlicher Verkehrswert"><Inp value={sv.nbVk} onChange={set("nbVk")} /></Row>
           {nbSR>0&&<Auto label={`→ Stille Reserve: ${fmt(nbSR)} × 50% = Zuschlag`} value={nbZ} />}
         </Sec>
-        <Sec title="Passiven / Fremdkapital – überbewertete Positionen" hint="Wenn Passiven zu hoch ausgewiesen sind, ist das Unternehmen weniger verschuldet als bilanziert – das erhöht den Substanzwert.">
-          <Row label="Sind transitorische Passiven in der Bilanz zu hoch ausgewiesen?" hint="z.B. passive Rechnungsabgrenzungen die aufgelöst werden können – Betrag der Überhöhung"><Inp value={sv.traP} onChange={set("traP")} /></Row>
-          <Row label="Gibt es überhöhte Rückstellungen in Ihrer Bilanz?" hint="z.B. Rückstellungen für Risiken die nicht mehr bestehen oder deutlich zu hoch angesetzt wurden"><Inp value={sv.rueck} onChange={set("rueck")} /></Row>
+        <Sec title="Überbewertete Passiven" hint="Wenn Passiven zu hoch ausgewiesen sind, ist das Unternehmen weniger verschuldet als bilanziert – das erhöht den Substanzwert.">
+          <Row label="Transitorische Passiven zu hoch" hint="Passive Rechnungsabgrenzungen die aufgelöst werden können – Betrag der Überhöhung"><Inp value={sv.traP} onChange={set("traP")} /></Row>
+          <Row label="Überhöhte Rückstellungen" hint="Rückstellungen für Risiken die nicht mehr bestehen oder deutlich zu hoch angesetzt wurden"><Inp value={sv.rueck} onChange={set("rueck")} /></Row>
         </Sec>
         <Sec title="Dividende" color="#c026d3">
           <Row label="Beschlossene Dividende" hint="Bereits traktandiert / beschlossen, noch nicht ausbezahlt"><Inp value={sv.div} onChange={set("div")} /></Row>
@@ -505,10 +505,10 @@ function TabMU({mu,setMu}) {
 function ErgebnisPanel({sv,ew,mu}) {
   const praktiker=(sv&&ew)?(2*ew+sv)/3:null;
   const werte=[
-    {l:"Substanzwert (netto)",v:sv,col:"#6b8a7a"},
-    {l:"Ertragswert (netto)",v:ew,col:"#1e6f63"},
-    {l:"Multiple-Methode",v:mu,col:"#7a8a9d"},
-    {l:"Praktikermethode",v:praktiker,col:"#8a7530",formel:true},
+    {l:"1. Substanzwert",v:sv,col:"#6b8a7a"},
+    {l:"2. Ertragswert",v:ew,col:"#1e6f63"},
+    {l:"3. Multiple",v:mu,col:"#7a8a9d"},
+    {l:"4. Mittelwert",v:praktiker,col:"#8a7530",formel:true},
   ];
   const verf=werte.filter(w=>w.v&&w.v>0);
   const maxV=Math.max(...verf.map(w=>w.v),1);
@@ -520,7 +520,7 @@ function ErgebnisPanel({sv,ew,mu}) {
     <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"1.5rem",marginTop:"2rem"}}>
       <div style={{marginBottom:"1.3rem"}}>
         <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.accent,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.2rem"}}>Ergebnisübersicht</div>
-        <div style={{fontSize:10,color:C.dim,fontFamily:T.mono}}>Alle Methoden im Vergleich · Praktikermethode wird automatisch berechnet</div>
+        <div style={{fontSize:10,color:C.dim,fontFamily:T.mono}}>Alle Methoden im Vergleich · Mittelwert wird automatisch berechnet</div>
       </div>
 
       {/* Karten */}
@@ -962,7 +962,7 @@ function TabPraktiker({svWert,ewWert}) {
           <span style={{fontSize:11,color:"#9a9da8",fontFamily:"IBM Plex Mono,monospace"}}>Mittelwertgewichtung</span>
         </div>
         <div style={{marginTop:"1.2rem",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0.75rem",background:hatBeide?"#e8d090":"#eef0f4",border:`1px solid ${hatBeide?"#d8b860":"#e8eaf0"}`,borderRadius:6}}>
-          <span style={{fontSize:12,color:hatBeide?"#1c1f2a":"#b0b3bc",fontFamily:"IBM Plex Mono,monospace",fontWeight:600}}>Verkehrswert (Praktikermethode)</span>
+          <span style={{fontSize:12,color:hatBeide?"#1c1f2a":"#b0b3bc",fontFamily:"IBM Plex Mono,monospace",fontWeight:600}}>Verkehrswert (Mittelwert)</span>
           <span style={{fontSize:"1.3rem",color:hatBeide?"#8a7530":"#dcdfe6",fontFamily:"IBM Plex Mono,monospace",fontWeight:600}}>{hatBeide?`CHF ${new Intl.NumberFormat("de-CH",{maximumFractionDigits:0}).format(Math.round(praktiker))}`:"–"}</span>
         </div>
         {!hatBeide&&(
@@ -993,10 +993,10 @@ const emptyEw = () => ({branche:"",risiko:"mittel",zOvr:"",j1:emptyJ(),j2:emptyJ
 const emptyMu = () => ({branche:"",maKl:"",mOvr:"",gew:"",st:"",zi:"",aoA:"",aoE:"",lA:"",lM:"",srVj:"",srA:""});
 
 const TABS=[
-  {k:"substanz",l:"Substanzwert",s:"netto",gratis:true},
-  {k:"ertrag",l:"Ertragswert",s:"netto",gratis:false},
-  {k:"multiple",l:"Multiple-Methode",s:"EBITC",gratis:false},
-  {k:"praktiker",l:"Praktikermethode",s:"(2×EW+SW)÷3",gratis:false},
+  {k:"substanz",l:"1. Substanzwert",s:"netto",gratis:true},
+  {k:"ertrag",l:"2. Ertragswert",s:"netto",gratis:false},
+  {k:"multiple",l:"3. Multiple",s:"EBITC",gratis:false},
+  {k:"praktiker",l:"4. Mittelwert",s:"(2×EW+SW)÷3",gratis:false},
 ];
 
 function UpsellModal({onClose,onBuy}) {
@@ -1011,7 +1011,7 @@ function UpsellModal({onClose,onBuy}) {
           Mit dem Vollbericht erhältst du:<br/>
           <span style={{color:C.accent}}>✓</span> Ertragswert (Kapitalisierungsmethode)<br/>
           <span style={{color:C.accent}}>✓</span> Multiple-Methode (EBITC × Branchenmultiple)<br/>
-          <span style={{color:C.accent}}>✓</span> Praktikermethode (automatisch berechnet)<br/>
+          <span style={{color:C.accent}}>✓</span> Mittelwert (automatisch berechnet)<br/>
           <span style={{color:C.accent}}>✓</span> PDF mit Wertbandbreite Min/Max Grafik
         </p>
         <button onClick={onBuy}
