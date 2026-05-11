@@ -19,6 +19,23 @@
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: #eef0f4; }
   ::-webkit-scrollbar-thumb { background: #c0c4cc; border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .app-padding { padding: 1.5rem 0.9rem !important; }
+    .app-header h1 { font-size: 1.8rem !important; }
+    .app-card { padding: 1rem 1.1rem !important; }
+    .app-card-lg { padding: 1.1rem !important; }
+    .responsive-2col { grid-template-columns: 1fr !important; gap: 1.2rem !important; }
+    .responsive-3col { grid-template-columns: 1fr !important; gap: 0.6rem !important; }
+    .responsive-4col { grid-template-columns: repeat(2, 1fr) !important; gap: 0.5rem !important; }
+    .responsive-pdf { flex-direction: column !important; }
+    .tabs-row { flex-wrap: wrap !important; gap: 4px !important; }
+    .tabs-row .tab-btn { flex: 1 1 calc(50% - 4px) !important; min-width: 0 !important; }
+    .sticky-calc { position: static !important; }
+    .bandbreite-bar { font-size: 9.5px !important; }
+    .bandbreite-row .bandbreite-label { width: 80px !important; font-size: 9.5px !important; }
+    .bandbreite-row .bandbreite-value { width: 80px !important; font-size: 9.5px !important; }
+  }
 </style>
 </head>
 <body>
@@ -245,7 +262,7 @@ function TabSV({steuersatz,sv,setSv}) {
   const result = num(sv.ek)+num(sv.jg) - uvAbzug + passivenZuschlag + srAV - lt + nbZ - num(sv.div);
 
   return (
-    <div style={{display:"grid",gridTemplateColumns:"1.1fr 0.9fr",gap:"1.8rem",alignItems:"start"}}>
+    <div className="responsive-2col" style={{display:"grid",gridTemplateColumns:"1.1fr 0.9fr",gap:"1.8rem",alignItems:"start"}}>
       <div>
         <Sec title="Eigenkapital" accent>
           <Row label="Total Eigenkapital ohne Jahresgewinn" hint="Gemäss Bilanz vor Gewinnverwendung"><Inp value={sv.ek} onChange={set("ek")} /></Row>
@@ -275,7 +292,7 @@ function TabSV({steuersatz,sv,setSv}) {
           <Row label="Beschlossene Dividende" hint="Bereits traktandiert / beschlossen, noch nicht ausbezahlt"><Inp value={sv.div} onChange={set("div")} /></Row>
         </Sec>
       </div>
-      <div style={{position:"sticky",top:"1rem"}}>
+      <div className="sticky-calc" style={{position:"sticky",top:"1rem"}}>
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.5rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
           <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.accent,textTransform:"uppercase",marginBottom:"1.1rem",fontFamily:T.mono}}>Berechnung</div>
           {[
@@ -331,7 +348,7 @@ function TabEW({steuersatz,ew,setEw}) {
   const yr = new Date().getFullYear();
 
   return (
-    <div style={{display:"grid",gridTemplateColumns:"1.15fr 0.85fr",gap:"1.8rem",alignItems:"start"}}>
+    <div className="responsive-2col" style={{display:"grid",gridTemplateColumns:"1.15fr 0.85fr",gap:"1.8rem",alignItems:"start"}}>
       <div>
         <Sec title="Branche & Kapitalisierungszinssatz" accent>
           <Row label="Branche"><Sel value={ew.branche} onChange={v=>setEw(p=>({...p,branche:v,zOvr:""}))} options={BRANCHEN_EW.map(b=>({v:b.v,l:b.l}))} placeholder="Branche wählen…" /></Row>
@@ -377,7 +394,7 @@ function TabEW({steuersatz,ew,setEw}) {
           )}
         </Sec>
       </div>
-      <div style={{position:"sticky",top:"1rem"}}>
+      <div className="sticky-calc" style={{position:"sticky",top:"1rem"}}>
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.5rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
           <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.accent,textTransform:"uppercase",marginBottom:"1.1rem",fontFamily:T.mono}}>Berechnung</div>
           <div style={{fontSize:10.5,color:C.dim,textTransform:"uppercase",letterSpacing:"0.09em",marginBottom:"0.35rem",fontFamily:T.mono}}>Effektive Jahresgewinne</div>
@@ -423,7 +440,7 @@ function TabMU({mu,setMu}) {
   const bereit=ebitc!==0&&mEff>0;
 
   return (
-    <div style={{display:"grid",gridTemplateColumns:"1.15fr 0.85fr",gap:"1.8rem",alignItems:"start"}}>
+    <div className="responsive-2col" style={{display:"grid",gridTemplateColumns:"1.15fr 0.85fr",gap:"1.8rem",alignItems:"start"}}>
       <div>
         <Sec title="Unternehmen" accent>
           <Row label="Branche"><Sel value={mu.branche} onChange={v=>setMu(p=>({...p,branche:v,mOvr:""}))} options={BRANCHEN_MU} placeholder="Branche wählen…" /></Row>
@@ -473,7 +490,7 @@ function TabMU({mu,setMu}) {
           {mu.mOvr!==""&&mVors&&<button onClick={()=>set("mOvr")("")} style={{fontSize:11,color:C.dim,background:"none",border:"none",cursor:"pointer",fontFamily:T.mono,padding:0}}>↩ Zurück zu Vorschlag ({mVors.toFixed(1)}×)</button>}
         </Sec>
       </div>
-      <div style={{position:"sticky",top:"1rem"}}>
+      <div className="sticky-calc" style={{position:"sticky",top:"1rem"}}>
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.5rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
           <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.accent,textTransform:"uppercase",marginBottom:"1.1rem",fontFamily:T.mono}}>Berechnung</div>
           <div style={{fontSize:10.5,color:C.dim,textTransform:"uppercase",letterSpacing:"0.09em",marginBottom:"0.35rem",fontFamily:T.mono}}>EBITC-Herleitung</div>
@@ -524,7 +541,7 @@ function ErgebnisPanel({sv,ew,mu}) {
       </div>
 
       {/* Karten */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"0.8rem",marginBottom:"1.5rem"}}>
+      <div className="responsive-4col" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"0.8rem",marginBottom:"1.5rem"}}>
         {werte.map((w,i)=>{
           const hat=w.v&&w.v>0;
           const bar=hat?(w.v/maxV)*100:0;
@@ -564,7 +581,7 @@ function ErgebnisPanel({sv,ew,mu}) {
             <div style={{position:"absolute",left:"90%",top:"50%",transform:"translateY(-50%)",width:2,height:18,background:"#9ad0c2",borderRadius:1}} />
           </div>
           {/* Min / Mitte / Max */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.5rem",marginBottom:"1rem"}}>
+          <div className="responsive-3col" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.5rem",marginBottom:"1rem"}}>
             <div style={{background:"#ffffff",borderRadius:6,padding:"0.75rem",border:"1px solid #c8d4cf"}}>
               <div style={{fontSize:10,color:"#4a6a5a",fontFamily:T.mono,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Minimum</div>
               <div style={{fontSize:"1.1rem",color:"#6b8a7a",fontFamily:T.mono,fontWeight:600}}>{fmt(minV)}</div>
@@ -586,12 +603,12 @@ function ErgebnisPanel({sv,ew,mu}) {
             {verf.map((w,i)=>{
               const pct=Math.max(6,(w.v/maxV)*100);
               return (
-                <div key={i} style={{display:"flex",alignItems:"center",gap:"0.8rem"}}>
-                  <div style={{width:130,fontSize:10.5,color:C.muted,fontFamily:T.mono,textAlign:"right",flexShrink:0}}>{w.l}</div>
+                <div key={i} className="bandbreite-row" style={{display:"flex",alignItems:"center",gap:"0.8rem"}}>
+                  <div className="bandbreite-label" style={{width:130,fontSize:10.5,color:C.muted,fontFamily:T.mono,textAlign:"right",flexShrink:0}}>{w.l}</div>
                   <div style={{flex:1,height:14,background:"#ffffff",borderRadius:3,overflow:"hidden"}}>
                     <div style={{height:"100%",width:`${pct}%`,background:w.col,borderRadius:3,opacity:0.8,transition:"width 0.4s"}} />
                   </div>
-                  <div style={{width:110,fontSize:10.5,color:w.col,fontFamily:T.mono,fontWeight:600,flexShrink:0}}>{fmt(w.v)}</div>
+                  <div className="bandbreite-value" style={{width:110,fontSize:10.5,color:w.col,fontFamily:T.mono,fontWeight:600,flexShrink:0}}>{fmt(w.v)}</div>
                 </div>
               );
             })}
@@ -1071,23 +1088,23 @@ function App() {
   const hatMU=mu.gew!=="";
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,padding:"3rem 1.5rem"}}>
+    <div className="app-padding" style={{minHeight:"100vh",background:C.bg,padding:"3rem 1.5rem"}}>
       <div style={{maxWidth:960,margin:"0 auto"}}>
 
         {/* Header */}
-        <div style={{marginBottom:"2.5rem"}}>
+        <div className="app-header" style={{marginBottom:"2.5rem"}}>
           <div style={{fontSize:10.5,letterSpacing:"0.22em",color:C.accent,textTransform:"uppercase",marginBottom:"0.5rem",fontFamily:T.mono}}>Schweizer KMU · Bewertungstool</div>
           <h1 style={{fontSize:"2.4rem",fontWeight:600,color:C.text,margin:0,letterSpacing:"-0.025em",fontFamily:T.sans}}>easyValue</h1>
           <p style={{color:C.dim,fontSize:13,marginTop:"0.5rem",fontFamily:T.mono}}>einfache Bewertung für Ihr Unternehmen</p>
         </div>
 
         {/* Gemeinsame Stammdaten */}
-        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.4rem 1.6rem",marginBottom:"1.8rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
+        <div className="app-card" style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.4rem 1.6rem",marginBottom:"1.8rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
           <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.dim,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.85rem",display:"flex",alignItems:"center"}}>
             <span>Ihre Unternehmensdaten</span>
             <InfoTip>Die eingegebenen Daten werden automatisch in alle Bewertungsmethoden übernommen.</InfoTip>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.9rem"}}>
+          <div className="responsive-3col" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.9rem"}}>
             <Row label="Rechtsform"><Sel value={rf} onChange={setRf} options={RECHTSFORMEN.map(r=>({v:r,l:r}))} placeholder="Rechtsform wählen…" /></Row>
             <Row label="Kanton (Steuerdomizil)"><Sel value={kt} onChange={v=>{setKt(v);setStCust("");}} options={KANTONE.map(k=>({v:k.k,l:`${k.k} – ${k.n}`}))} placeholder="Kanton wählen…" /></Row>
             <Row label="Steuersatz" hint="inkl. direkte Bundessteuer · anpassbar">
@@ -1097,12 +1114,12 @@ function App() {
         </div>
 
         {/* Tabs */}
-        <div style={{display:"flex",gap:4,marginBottom:"1.8rem",background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"0.35rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
+        <div className="tabs-row" style={{display:"flex",gap:4,marginBottom:"1.8rem",background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"0.35rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
           {TABS.map(t=>{
             const gesperrt=!t.gratis&&!bezahlt;
             const aktiv=tab===t.k&&!gesperrt;
             return (
-              <button key={t.k}
+              <button key={t.k} className="tab-btn"
                 onClick={()=>{ if(gesperrt){setModal(true);}else{setTab(t.k);} }}
                 style={{flex:1,padding:"0.75rem 0.55rem",border:"none",borderRadius:7,cursor:"pointer",background:aktiv?C.green:"transparent",transition:"all 0.2s",textAlign:"center",position:"relative",opacity:gesperrt?0.55:1,boxShadow:aktiv?"0 1px 2px rgba(30,111,99,0.08)":"none"}}>
                 <div style={{fontSize:11,letterSpacing:"0.08em",color:aktiv?C.accent:gesperrt?"#b0b3bc":C.dim,fontFamily:T.mono,fontWeight:aktiv?600:500,textTransform:"uppercase"}}>
@@ -1124,7 +1141,7 @@ function App() {
         <ErgebnisPanel sv={hatSV?svWert:null} ew={hatEW?ewWert:null} mu={hatMU?muWert:null} />
 
         {/* PDF Buttons */}
-        <div style={{marginTop:"2rem",display:"flex",gap:"1rem",flexWrap:"wrap"}}>
+        <div className="responsive-pdf" style={{marginTop:"2rem",display:"flex",gap:"1rem",flexWrap:"wrap"}}>
           <div style={{flex:1,minWidth:220,background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.3rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
             <div style={{fontSize:10.5,letterSpacing:"0.15em",color:C.accent,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.4rem"}}>Gratis</div>
             <div style={{fontSize:13,color:C.text,fontFamily:T.sans,fontWeight:600,marginBottom:"0.3rem"}}>Substanzwert-Bericht</div>
