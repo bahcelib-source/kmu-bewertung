@@ -507,8 +507,8 @@ function ErgebnisPanel({sv,ew,mu}) {
   const werte=[
     {l:"1. Substanzwert",v:sv,col:"#6b8a7a"},
     {l:"2. Ertragswert",v:ew,col:"#1e6f63"},
-    {l:"3. Multiple",v:mu,col:"#7a8a9d"},
-    {l:"4. Mittelwert",v:praktiker,col:"#8a7530",formel:true},
+    {l:"3. Praktiker",v:praktiker,col:"#8a7530",formel:true},
+    {l:"4. Multiple",v:mu,col:"#7a8a9d"},
   ];
   const verf=werte.filter(w=>w.v&&w.v>0);
   const maxV=Math.max(...verf.map(w=>w.v),1);
@@ -520,7 +520,7 @@ function ErgebnisPanel({sv,ew,mu}) {
     <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.8rem",marginTop:"2.5rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
       <div style={{marginBottom:"1.3rem"}}>
         <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.accent,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.2rem"}}>Ergebnisübersicht</div>
-        <div style={{fontSize:10,color:C.dim,fontFamily:T.mono}}>Alle Methoden im Vergleich · Mittelwert wird automatisch berechnet</div>
+        <div style={{fontSize:10,color:C.dim,fontFamily:T.mono}}>Alle Methoden im Vergleich · Praktiker wird automatisch berechnet</div>
       </div>
 
       {/* Karten */}
@@ -962,7 +962,7 @@ function TabPraktiker({svWert,ewWert}) {
           <span style={{fontSize:11,color:"#9a9da8",fontFamily:"IBM Plex Mono,monospace"}}>Mittelwertgewichtung</span>
         </div>
         <div style={{marginTop:"1.2rem",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0.75rem",background:hatBeide?"#e8d090":"#eef0f4",border:`1px solid ${hatBeide?"#d8b860":"#e8eaf0"}`,borderRadius:6}}>
-          <span style={{fontSize:12,color:hatBeide?"#1c1f2a":"#b0b3bc",fontFamily:"IBM Plex Mono,monospace",fontWeight:600}}>Verkehrswert (Mittelwert)</span>
+          <span style={{fontSize:12,color:hatBeide?"#1c1f2a":"#b0b3bc",fontFamily:"IBM Plex Mono,monospace",fontWeight:600}}>Verkehrswert (Praktiker)</span>
           <span style={{fontSize:"1.3rem",color:hatBeide?"#8a7530":"#dcdfe6",fontFamily:"IBM Plex Mono,monospace",fontWeight:600}}>{hatBeide?`CHF ${new Intl.NumberFormat("de-CH",{maximumFractionDigits:0}).format(Math.round(praktiker))}`:"–"}</span>
         </div>
         {!hatBeide&&(
@@ -995,8 +995,8 @@ const emptyMu = () => ({branche:"",maKl:"",mOvr:"",gew:"",st:"",zi:"",aoA:"",aoE
 const TABS=[
   {k:"substanz",l:"1. Substanzwert",s:"netto",gratis:true},
   {k:"ertrag",l:"2. Ertragswert",s:"netto",gratis:false},
-  {k:"multiple",l:"3. Multiple",s:"EBITC",gratis:false},
-  {k:"praktiker",l:"4. Mittelwert",s:"(2×EW+SW)÷3",gratis:false},
+  {k:"praktiker",l:"3. Praktiker",s:"(2×EW+SW)÷3",gratis:false},
+  {k:"multiple",l:"4. Multiple",s:"EBITC",gratis:false},
 ];
 
 function UpsellModal({onClose,onBuy}) {
@@ -1011,7 +1011,7 @@ function UpsellModal({onClose,onBuy}) {
           Mit dem Vollbericht erhältst du:<br/>
           <span style={{color:C.accent}}>✓</span> Ertragswert (Kapitalisierungsmethode)<br/>
           <span style={{color:C.accent}}>✓</span> Multiple-Methode (EBITC × Branchenmultiple)<br/>
-          <span style={{color:C.accent}}>✓</span> Mittelwert (automatisch berechnet)<br/>
+          <span style={{color:C.accent}}>✓</span> Praktiker (automatisch berechnet)<br/>
           <span style={{color:C.accent}}>✓</span> PDF mit Wertbandbreite Min/Max Grafik
         </p>
         <button onClick={onBuy}
