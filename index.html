@@ -252,14 +252,12 @@ function TabSV({steuersatz,sv,setSv}) {
   const nbZ              = nbSR * 0.5;
   const uvAbzug          = num(sv.deb)+num(sv.vor)+num(sv.ang)+num(sv.traA);
   const passivenZuschlag = num(sv.traP)+num(sv.rueck);
-  // Latente Steuern auf: Passiven-Korrekturen + AV betrieblich
-  // NbAV: 50%-Pauschale (inkl. lat. St. + Transaktionskosten) → kein separates ltNbAV
-  // UV-Abzüge: Wertberichtigungen → keine latenten Steuern
+  const srUV             = num(sv.srDelk)+num(sv.srAa)+num(sv.srVor)+num(sv.srForder);
   const ltPassiven = passivenZuschlag * (steuersatz/100);
   const ltAV       = srAV             * (steuersatz/100);
-  // NbAV: 50%-Pauschale enthält lat. Steuern bereits → keine separate ltNbAV
-  const lt         = ltPassiven + ltAV;
-  const result = num(sv.ek)+num(sv.jg) - uvAbzug + passivenZuschlag + srAV - lt + nbZ - num(sv.div);
+  const ltUV       = srUV             * (steuersatz/100);
+  const lt         = ltPassiven + ltAV + ltUV;
+  const result = num(sv.ek)+num(sv.jg) - uvAbzug + passivenZuschlag + srAV + srUV - lt + nbZ - num(sv.div);
 
   return (
     <div className="responsive-2col" style={{display:"grid",gridTemplateColumns:"1.1fr 0.9fr",gap:"1.8rem",alignItems:"start"}}>
@@ -274,7 +272,14 @@ function TabSV({steuersatz,sv,setSv}) {
           <Row label="Angefangene Arbeiten" hint="Projekte die nicht mehr fertiggestellt oder verrechnet werden können"><Inp value={sv.ang} onChange={set("ang")} /></Row>
           <Row label="Transitorische Aktiven zu hoch" hint="Aktive Rechnungsabgrenzungen die nicht mehr benötigt werden oder bereits verbraucht sind"><Inp value={sv.traA} onChange={set("traA")} /></Row>
         </Sec>
-        <Sec title="Stille Reserven (betrieblich)" hint="Differenz zwischen Buchwert und tatsächlichem Verkehrswert von Maschinen, Fahrzeugen, Einrichtungen.">
+        <Sec title="Stille Reserven auf Umlaufvermögen" hint="Wenn Aktiven des Umlaufvermögens zu tief bewertet sind (z.B. überhöhte Wertberichtigungen), wird die stille Reserve aufgelöst und dem Substanzwert zugeschlagen. Latente Steuern werden automatisch berücksichtigt.">
+          <Row label="Stille Reserve Delkredere" hint="Wenn die Wertberichtigung auf Debitoren höher als nötig ist – Betrag der Überhöhung"><Inp value={sv.srDelk} onChange={set("srDelk")} /></Row>
+          <Row label="Stille Reserve Angefangene Arbeiten" hint="Wenn angefangene Arbeiten zu tief bewertet sind – Differenz zum effektiven Wert"><Inp value={sv.srAa} onChange={set("srAa")} /></Row>
+          <Row label="Stille Reserve Vorräte / Warenlager" hint="Wenn Vorräte/Warenlager zu tief bewertet sind (z.B. Warendrittel) – Betrag der Unterbewertung"><Inp value={sv.srVor} onChange={set("srVor")} /></Row>
+          <Row label="Stille Reserve Forderungen" hint="Übrige Forderungen die zu tief bewertet sind – Betrag der Unterbewertung"><Inp value={sv.srForder} onChange={set("srForder")} /></Row>
+          {srUV>0&&<Auto label="→ Stille Reserven UV total" value={srUV} hl />}
+        </Sec>
+        <Sec title="Stille Reserven auf Anlagevermögen" hint="Differenz zwischen Buchwert und tatsächlichem Verkehrswert von Maschinen, Fahrzeugen, Einrichtungen.">
           <Row label="Buchwert Anlagevermögen" hint="Maschinen, Fahrzeuge, Einrichtungen"><Inp value={sv.avBw} onChange={set("avBw")} /></Row>
           <Row label="Tatsächlicher Verkehrswert" hint="Geschätzter Marktwert / Wiederbeschaffungswert"><Inp value={sv.avVk} onChange={set("avVk")} /></Row>
           {srAV>0&&<Auto label="→ Stille Reserve" value={srAV} />}
@@ -300,9 +305,11 @@ function TabSV({steuersatz,sv,setSv}) {
             ["+ Jahresgewinn / -verlust", num(sv.jg)],
             ["− Überbewertete Debitoren / Vorräte / Transitorische Aktiven", -uvAbzug],
             ["+ Überhöhte Rückstellungen / Transitorische Passiven", passivenZuschlag],
-            ["+ Stille Reserven betriebliches Anlagevermögen", srAV],
+            ["+ Stille Reserven Umlaufvermögen", srUV],
+            ["+ Stille Reserven Anlagevermögen", srAV],
             ["+ Nicht betriebsnotwendiges Anlagevermögen (50% stille Reserve)", nbZ],
             ["− Latente Steuern auf Passiven-Korrekturen", -ltPassiven],
+            ["− Latente Steuern auf UV", -ltUV],
             ["− Latente Steuern auf AV betrieblich", -ltAV],
             ["− Beschlossene Dividende", -num(sv.div)],
           ].map(([l,v],i)=>(
@@ -1005,7 +1012,7 @@ function TabPraktiker({svWert,ewWert}) {
   );
 }
 // ─── HAUPT-APP ────────────────────────────────────────────────────────────────
-const emptySv = () => ({ek:"",jg:"",deb:"",vor:"",ang:"",traA:"",traP:"",rueck:"",avBw:"",avVk:"",nbBw:"",nbVk:"",div:""});
+const emptySv = () => ({ek:"",jg:"",deb:"",vor:"",ang:"",traA:"",traP:"",rueck:"",avBw:"",avVk:"",nbBw:"",nbVk:"",div:"",srDelk:"",srAa:"",srVor:"",srForder:""});
 const emptyEw = () => ({branche:"",risiko:"mittel",zOvr:"",j1:emptyJ(),j2:emptyJ(),j3:emptyJ(),z2:false,z3:false});
 const emptyMu = () => ({branche:"",maKl:"",mOvr:"",gew:"",st:"",zi:"",aoA:"",aoE:"",lA:"",lM:"",srVj:"",srA:""});
 
