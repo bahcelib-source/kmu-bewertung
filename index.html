@@ -276,7 +276,7 @@ function TabSV({steuersatz,sv,setSv}) {
         </Sec>
       </div>
       <div style={{position:"sticky",top:"1rem"}}>
-        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"1.3rem"}}>
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.5rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
           <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.accent,textTransform:"uppercase",marginBottom:"1.1rem",fontFamily:T.mono}}>Berechnung</div>
           {[
             ["EK ohne Jahresgewinn", num(sv.ek)],
@@ -378,7 +378,7 @@ function TabEW({steuersatz,ew,setEw}) {
         </Sec>
       </div>
       <div style={{position:"sticky",top:"1rem"}}>
-        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"1.3rem"}}>
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.5rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
           <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.accent,textTransform:"uppercase",marginBottom:"1.1rem",fontFamily:T.mono}}>Berechnung</div>
           <div style={{fontSize:10.5,color:C.dim,textTransform:"uppercase",letterSpacing:"0.09em",marginBottom:"0.35rem",fontFamily:T.mono}}>Effektive Jahresgewinne</div>
           {[[`Jahr 1 (×3) – ${yr-1}`,g1],...(g2!==null?[[`Jahr 2 (×2) – ${yr-2}`,g2]]:[]),...(g3!==null?[[`Jahr 3 (×1) – ${yr-3}`,g3]]:[])].map(([l,v],i)=>(
@@ -474,7 +474,7 @@ function TabMU({mu,setMu}) {
         </Sec>
       </div>
       <div style={{position:"sticky",top:"1rem"}}>
-        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"1.3rem"}}>
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.5rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
           <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.accent,textTransform:"uppercase",marginBottom:"1.1rem",fontFamily:T.mono}}>Berechnung</div>
           <div style={{fontSize:10.5,color:C.dim,textTransform:"uppercase",letterSpacing:"0.09em",marginBottom:"0.35rem",fontFamily:T.mono}}>EBITC-Herleitung</div>
           {[["Jahresgewinn",g],["+Steuern",s],["+Zinsaufwand",z],["+Einmaliger Aufwand",ae],["−Einmaliger Ertrag",-ee],["+/− Unternehmerlohn",lB],["+/− Stille Reserven",srV]].map(([l,v],i)=>(
@@ -517,7 +517,7 @@ function ErgebnisPanel({sv,ew,mu}) {
   const mitte=hatBandbreite?(minV+maxV)/2:null;
 
   return (
-    <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"1.5rem",marginTop:"2rem"}}>
+    <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.8rem",marginTop:"2.5rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
       <div style={{marginBottom:"1.3rem"}}>
         <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.accent,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.2rem"}}>Ergebnisübersicht</div>
         <div style={{fontSize:10,color:C.dim,fontFamily:T.mono}}>Alle Methoden im Vergleich · Mittelwert wird automatisch berechnet</div>
@@ -1071,18 +1071,18 @@ function App() {
   const hatMU=mu.gew!=="";
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,padding:"2rem 1rem"}}>
-      <div style={{maxWidth:920,margin:"0 auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,padding:"3rem 1.5rem"}}>
+      <div style={{maxWidth:960,margin:"0 auto"}}>
 
         {/* Header */}
-        <div style={{marginBottom:"1.8rem"}}>
-          <div style={{fontSize:10.5,letterSpacing:"0.22em",color:C.accent,textTransform:"uppercase",marginBottom:"0.35rem",fontFamily:T.mono}}>Schweizer KMU · Bewertungstool</div>
-          <h1 style={{fontSize:"2rem",fontWeight:600,color:C.text,margin:0,letterSpacing:"-0.02em",fontFamily:T.sans}}>easyValue</h1>
-          <p style={{color:C.dim,fontSize:12,marginTop:"0.35rem",fontFamily:T.mono}}>einfache Bewertung für Ihr Unternehmen</p>
+        <div style={{marginBottom:"2.5rem"}}>
+          <div style={{fontSize:10.5,letterSpacing:"0.22em",color:C.accent,textTransform:"uppercase",marginBottom:"0.5rem",fontFamily:T.mono}}>Schweizer KMU · Bewertungstool</div>
+          <h1 style={{fontSize:"2.4rem",fontWeight:600,color:C.text,margin:0,letterSpacing:"-0.025em",fontFamily:T.sans}}>easyValue</h1>
+          <p style={{color:C.dim,fontSize:13,marginTop:"0.5rem",fontFamily:T.mono}}>einfache Bewertung für Ihr Unternehmen</p>
         </div>
 
         {/* Gemeinsame Stammdaten */}
-        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"1.1rem 1.3rem",marginBottom:"1.3rem"}}>
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.4rem 1.6rem",marginBottom:"1.8rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
           <div style={{fontSize:10.5,letterSpacing:"0.18em",color:C.dim,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.85rem",display:"flex",alignItems:"center"}}>
             <span>Ihre Unternehmensdaten</span>
             <InfoTip>Die eingegebenen Daten werden automatisch in alle Bewertungsmethoden übernommen.</InfoTip>
@@ -1097,18 +1097,18 @@ function App() {
         </div>
 
         {/* Tabs */}
-        <div style={{display:"flex",gap:3,marginBottom:"1.3rem",background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"0.28rem"}}>
+        <div style={{display:"flex",gap:4,marginBottom:"1.8rem",background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"0.35rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
           {TABS.map(t=>{
             const gesperrt=!t.gratis&&!bezahlt;
             const aktiv=tab===t.k&&!gesperrt;
             return (
               <button key={t.k}
                 onClick={()=>{ if(gesperrt){setModal(true);}else{setTab(t.k);} }}
-                style={{flex:1,padding:"0.6rem 0.45rem",border:"none",borderRadius:6,cursor:"pointer",background:aktiv?C.bg:"transparent",transition:"all 0.15s",textAlign:"center",position:"relative",opacity:gesperrt?0.6:1}}>
-                <div style={{fontSize:10,letterSpacing:"0.07em",color:aktiv?C.accent:gesperrt?"#b0b3bc":C.dim,fontFamily:T.mono,fontWeight:aktiv?600:400,textTransform:"uppercase"}}>
+                style={{flex:1,padding:"0.75rem 0.55rem",border:"none",borderRadius:7,cursor:"pointer",background:aktiv?C.green:"transparent",transition:"all 0.2s",textAlign:"center",position:"relative",opacity:gesperrt?0.55:1,boxShadow:aktiv?"0 1px 2px rgba(30,111,99,0.08)":"none"}}>
+                <div style={{fontSize:11,letterSpacing:"0.08em",color:aktiv?C.accent:gesperrt?"#b0b3bc":C.dim,fontFamily:T.mono,fontWeight:aktiv?600:500,textTransform:"uppercase"}}>
                   {gesperrt?"🔒 ":""}{t.l}
                 </div>
-                <div style={{fontSize:10,color:aktiv?"#2a6a60":"#dcdfe6",fontFamily:T.mono,marginTop:1}}>{gesperrt?"CHF 49":t.s}</div>
+                <div style={{fontSize:10,color:aktiv?"#2a6a60":"#b0b3bc",fontFamily:T.mono,marginTop:3}}>{gesperrt?"CHF 49":t.s}</div>
               </button>
             );
           })}
@@ -1124,8 +1124,8 @@ function App() {
         <ErgebnisPanel sv={hatSV?svWert:null} ew={hatEW?ewWert:null} mu={hatMU?muWert:null} />
 
         {/* PDF Buttons */}
-        <div style={{marginTop:"1.5rem",display:"flex",gap:"0.8rem",flexWrap:"wrap"}}>
-          <div style={{flex:1,minWidth:220,background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"1.1rem"}}>
+        <div style={{marginTop:"2rem",display:"flex",gap:"1rem",flexWrap:"wrap"}}>
+          <div style={{flex:1,minWidth:220,background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.3rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
             <div style={{fontSize:10.5,letterSpacing:"0.15em",color:C.accent,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.4rem"}}>Gratis</div>
             <div style={{fontSize:13,color:C.text,fontFamily:T.sans,fontWeight:600,marginBottom:"0.3rem"}}>Substanzwert-Bericht</div>
             <div style={{fontSize:10,color:C.dim,fontFamily:T.mono,marginBottom:"0.9rem"}}>PDF mit Substanzwert-Berechnung</div>
@@ -1134,7 +1134,7 @@ function App() {
               PDF ÖFFNEN ↗
             </a>
           </div>
-          <div style={{flex:1,minWidth:220,background:C.card,border:`1px solid ${bezahlt?"#9ad0c2":C.border}`,borderRadius:8,padding:"1.1rem",opacity:bezahlt?1:0.75}}>
+          <div style={{flex:1,minWidth:220,background:C.card,border:`1px solid ${bezahlt?"#9ad0c2":C.border}`,borderRadius:10,padding:"1.3rem",opacity:bezahlt?1:0.75,boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
             <div style={{fontSize:10.5,letterSpacing:"0.15em",color:"#8a7530",textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.4rem"}}>{bezahlt?"✓ Freigeschaltet":"CHF 49 · Vollbericht"}</div>
             <div style={{fontSize:13,color:C.text,fontFamily:T.sans,fontWeight:600,marginBottom:"0.3rem"}}>Alle 4 Methoden + Grafik</div>
             <div style={{fontSize:10,color:C.dim,fontFamily:T.mono,marginBottom:"0.9rem"}}>Bandbreite Min/Max · Detailberechnungen</div>
