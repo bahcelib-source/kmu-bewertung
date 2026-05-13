@@ -169,6 +169,32 @@ const Inp = ({value,onChange,prefix="CHF",placeholder="0",positiveOnly=false}) =
     </div>
   );
 };
+const HerleitungBlock = ({open,onToggle,formula,labelA,hintA,valueA,onChangeA,labelB,hintB,valueB,onChangeB,resultLabel,onApply}) => {
+  const result = Math.max(0, num(valueA)-num(valueB));
+  return (
+    <>
+      <button onClick={onToggle}
+        style={{marginTop:"0.4rem",padding:"0.4rem 0.7rem",background:open?C.green:"transparent",border:`1px dashed ${open?C.greenb:C.border}`,borderRadius:5,color:open?C.accent:C.dim,fontSize:10,letterSpacing:"0.08em",textTransform:"uppercase",fontFamily:T.mono,cursor:"pointer"}}>
+        {open?"▾":"▸"} Herleitung berechnen
+      </button>
+      {open&&(
+        <div style={{marginTop:"0.5rem",padding:"0.9rem 1rem",background:C.bg,borderRadius:6,display:"flex",flexDirection:"column",gap:"0.6rem"}}>
+          <div style={{fontSize:10.5,color:C.dim,fontFamily:T.mono,lineHeight:1.6}}>{formula}</div>
+          <Row label={labelA} hint={hintA}><Inp value={valueA} onChange={onChangeA} positiveOnly /></Row>
+          <Row label={labelB} hint={hintB}><Inp value={valueB} onChange={onChangeB} positiveOnly /></Row>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0.5rem 0.7rem",background:C.card,border:`1px solid ${C.greenb}`,borderRadius:5}}>
+            <span style={{fontSize:10.5,color:C.muted,fontFamily:T.mono,letterSpacing:"0.08em",textTransform:"uppercase"}}>= {resultLabel}</span>
+            <span style={{fontSize:"0.95rem",color:C.accent,fontFamily:T.mono,fontWeight:600}}>{result>0?fmt(result):"–"}</span>
+          </div>
+          {result>0&&<button onClick={()=>{onApply(String(result));onToggle();}}
+            style={{padding:"0.55rem 0.8rem",background:C.accent,border:"none",borderRadius:5,color:"#fff",fontSize:10.5,letterSpacing:"0.08em",textTransform:"uppercase",fontFamily:T.mono,fontWeight:600,cursor:"pointer"}}>
+            → In Hauptfeld übernehmen
+          </button>}
+        </div>
+      )}
+    </>
+  );
+};
 const Sel = ({value,onChange,options,placeholder}) => (
   <div style={{position:"relative"}}>
     <select value={value} onChange={e=>onChange(e.target.value)}
@@ -271,42 +297,88 @@ function TabSV({steuersatz,sv,setSv}) {
           <Row label="Jahresgewinn / -verlust" hint="Gemäss Erfolgsrechnung (negativ = Verlust)"><Inp value={sv.jg} onChange={set("jg")} /></Row>
         </Sec>
         <Sec title="Überbewertete Aktiven" hint="Beträge eingeben, um die einzelne Bilanzpositionen überhöht sind. Diese Abzüge senken den Substanzwert.">
-          <Row label="Gefährdete Forderungen" hint="Kunden die voraussichtlich nicht zahlen werden – Betrag der uneinbringlichen Forderungen"><Inp value={sv.deb} onChange={set("deb")} positiveOnly /></Row>
-          <Row label="Vorräte / Warenlager zu hoch bewertet" hint="Veralteter Lagerbestand, unverkäufliche Waren – Betrag der Wertberichtigung"><Inp value={sv.vor} onChange={set("vor")} positiveOnly /></Row>
-          <Row label="Angefangene Arbeiten / noch nicht fakturierte Leistungen zu hoch bewertet" hint="Projekte die nicht mehr fertiggestellt oder verrechnet werden können – Betrag der Überhöhung"><Inp value={sv.ang} onChange={set("ang")} positiveOnly /></Row>
-          <Row label="Transitorische Aktiven zu hoch bewertet" hint="Aktive Rechnungsabgrenzungen die nicht mehr benötigt werden oder bereits verbraucht sind"><Inp value={sv.traA} onChange={set("traA")} positiveOnly /></Row>
+          <div>
+            <Row label="Gefährdete Forderungen" hint="Kunden die voraussichtlich nicht zahlen werden – Betrag der uneinbringlichen Forderungen"><Inp value={sv.deb} onChange={set("deb")} positiveOnly /></Row>
+            <HerleitungBlock open={sv.debOpen} onToggle={()=>set("debOpen")(!sv.debOpen)}
+              formula="Ausfallrisiko = Total Forderungen − Voraussichtlich einbringbar"
+              labelA="Total Forderungen in Bilanz" hintA="Saldo Debitorenkonto laut aktueller Bilanz"
+              valueA={sv.debA} onChangeA={set("debA")}
+              labelB="Davon voraussichtlich einbringbar" hintB="Realistisch zahlende Kunden / werthaltige Forderungen"
+              valueB={sv.debB} onChangeB={set("debB")}
+              resultLabel="Ausfallrisiko" onApply={set("deb")} />
+          </div>
+          <div>
+            <Row label="Vorräte / Warenlager zu hoch bewertet" hint="Veralteter Lagerbestand, unverkäufliche Waren – Betrag der Wertberichtigung"><Inp value={sv.vor} onChange={set("vor")} positiveOnly /></Row>
+            <HerleitungBlock open={sv.vorOpen} onToggle={()=>set("vorOpen")(!sv.vorOpen)}
+              formula="Überbewertung = Buchwert in Bilanz − Tatsächlicher Marktwert"
+              labelA="Buchwert Warenlager" hintA="Wert des Warenlagers laut aktueller Bilanz"
+              valueA={sv.vorA} onChangeA={set("vorA")}
+              labelB="Tatsächlicher Marktwert" hintB="Realistischer Veräusserungswert (ohne unverkäufliche Ware)"
+              valueB={sv.vorB} onChangeB={set("vorB")}
+              resultLabel="Überbewertung" onApply={set("vor")} />
+          </div>
+          <div>
+            <Row label="Angefangene Arbeiten / noch nicht fakturierte Leistungen zu hoch bewertet" hint="Projekte die nicht mehr fertiggestellt oder verrechnet werden können – Betrag der Überhöhung"><Inp value={sv.ang} onChange={set("ang")} positiveOnly /></Row>
+            <HerleitungBlock open={sv.angOpen} onToggle={()=>set("angOpen")(!sv.angOpen)}
+              formula="Überbewertung = Buchwert − Tatsächlich werthaltig"
+              labelA="Buchwert angefangene Arbeiten" hintA="Wert laut aktueller Bilanz (inkl. noch nicht fakturierte Leistungen)"
+              valueA={sv.angA} onChangeA={set("angA")}
+              labelB="Tatsächlich werthaltig / fakturierbar" hintB="Realistisch noch verrechenbare Projekte"
+              valueB={sv.angB} onChangeB={set("angB")}
+              resultLabel="Überbewertung" onApply={set("ang")} />
+          </div>
+          <div>
+            <Row label="Transitorische Aktiven zu hoch bewertet" hint="Aktive Rechnungsabgrenzungen die nicht mehr benötigt werden oder bereits verbraucht sind"><Inp value={sv.traA} onChange={set("traA")} positiveOnly /></Row>
+            <HerleitungBlock open={sv.traAOpen} onToggle={()=>set("traAOpen")(!sv.traAOpen)}
+              formula="Überhöhung = Transitorische Aktiven in Bilanz − Tatsächlich gerechtfertigt"
+              labelA="Transitorische Aktiven in Bilanz" hintA="Aktive Rechnungsabgrenzungen laut aktueller Bilanz"
+              valueA={sv.traAA} onChangeA={set("traAA")}
+              labelB="Davon gerechtfertigt" hintB="Anteil der noch zukünftigen Aufwand abgrenzt"
+              valueB={sv.traAB} onChangeB={set("traAB")}
+              resultLabel="Überhöhung" onApply={set("traA")} />
+          </div>
         </Sec>
         <Sec title="Stille Reserven auf Umlaufvermögen" hint="Wenn Aktiven des Umlaufvermögens zu tief bewertet sind (z.B. überhöhte Wertberichtigungen), wird die stille Reserve aufgelöst und dem Substanzwert zugeschlagen. Latente Steuern werden automatisch berücksichtigt.">
           <div>
             <Row label="Stille Reserve Delkredere" hint="Wenn die Wertberichtigung auf Debitoren höher als nötig ist – Betrag der Überhöhung"><Inp value={sv.srDelk} onChange={set("srDelk")} positiveOnly /></Row>
-            <button onClick={()=>set("srDelkOpen")(!sv.srDelkOpen)}
-              style={{marginTop:"0.4rem",padding:"0.4rem 0.7rem",background:sv.srDelkOpen?C.green:"transparent",border:`1px dashed ${sv.srDelkOpen?C.greenb:C.border}`,borderRadius:5,color:sv.srDelkOpen?C.accent:C.dim,fontSize:10,letterSpacing:"0.08em",textTransform:"uppercase",fontFamily:T.mono,cursor:"pointer"}}>
-              {sv.srDelkOpen?"▾":"▸"} Herleitung berechnen
-            </button>
-            {sv.srDelkOpen&&(()=>{
-              const delk = Math.max(0, num(sv.srDelkBilanz)-num(sv.srDelkRecht));
-              return (
-                <div style={{marginTop:"0.5rem",padding:"0.9rem 1rem",background:C.bg,borderRadius:6,display:"flex",flexDirection:"column",gap:"0.6rem"}}>
-                  <div style={{fontSize:10.5,color:C.dim,fontFamily:T.mono,lineHeight:1.6}}>
-                    Stille Reserve = Delkredere in Bilanz − gerechtfertigter Anteil
-                  </div>
-                  <Row label="Delkredere in aktueller Bilanz" hint="Wertberichtigung auf Debitoren – wie in der aktuellen Bilanz ausgewiesen"><Inp value={sv.srDelkBilanz} onChange={set("srDelkBilanz")} positiveOnly /></Row>
-                  <Row label="Davon gerechtfertigt" hint="Anteil, der tatsächlich uneinbringliche Forderungen abdeckt"><Inp value={sv.srDelkRecht} onChange={set("srDelkRecht")} positiveOnly /></Row>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0.5rem 0.7rem",background:C.card,border:`1px solid ${C.greenb}`,borderRadius:5}}>
-                    <span style={{fontSize:10.5,color:C.muted,fontFamily:T.mono,letterSpacing:"0.08em",textTransform:"uppercase"}}>= Stille Reserve</span>
-                    <span style={{fontSize:"0.95rem",color:C.accent,fontFamily:T.mono,fontWeight:600}}>{delk>0?fmt(delk):"–"}</span>
-                  </div>
-                  {delk>0&&<button onClick={()=>{set("srDelk")(String(delk));set("srDelkOpen")(false);}}
-                    style={{padding:"0.55rem 0.8rem",background:C.accent,border:"none",borderRadius:5,color:"#fff",fontSize:10.5,letterSpacing:"0.08em",textTransform:"uppercase",fontFamily:T.mono,fontWeight:600,cursor:"pointer"}}>
-                    → In Hauptfeld übernehmen
-                  </button>}
-                </div>
-              );
-            })()}
+            <HerleitungBlock open={sv.srDelkOpen} onToggle={()=>set("srDelkOpen")(!sv.srDelkOpen)}
+              formula="Stille Reserve = Delkredere in Bilanz − gerechtfertigter Anteil"
+              labelA="Delkredere in aktueller Bilanz" hintA="Wertberichtigung auf Debitoren – wie in der aktuellen Bilanz ausgewiesen"
+              valueA={sv.srDelkBilanz} onChangeA={set("srDelkBilanz")}
+              labelB="Davon gerechtfertigt" hintB="Anteil, der tatsächlich uneinbringliche Forderungen abdeckt"
+              valueB={sv.srDelkRecht} onChangeB={set("srDelkRecht")}
+              resultLabel="Stille Reserve" onApply={set("srDelk")} />
           </div>
-          <Row label="Stille Reserve Angefangene Arbeiten" hint="Wenn angefangene Arbeiten zu tief bewertet sind – Differenz zum effektiven Wert"><Inp value={sv.srAa} onChange={set("srAa")} /></Row>
-          <Row label="Stille Reserve Vorräte / Warenlager" hint="Wenn Vorräte/Warenlager zu tief bewertet sind (z.B. Warendrittel) – Betrag der Unterbewertung"><Inp value={sv.srVor} onChange={set("srVor")} /></Row>
-          <Row label="Stille Reserve Forderungen" hint="Übrige Forderungen die zu tief bewertet sind – Betrag der Unterbewertung"><Inp value={sv.srForder} onChange={set("srForder")} /></Row>
+          <div>
+            <Row label="Stille Reserve Angefangene Arbeiten" hint="Wenn angefangene Arbeiten zu tief bewertet sind – Differenz zum effektiven Wert"><Inp value={sv.srAa} onChange={set("srAa")} positiveOnly /></Row>
+            <HerleitungBlock open={sv.srAaOpen} onToggle={()=>set("srAaOpen")(!sv.srAaOpen)}
+              formula="Stille Reserve = Tatsächlich werthaltig − Buchwert in Bilanz"
+              labelA="Tatsächlich werthaltig" hintA="Realistischer Wert der angefangenen Arbeiten / noch nicht fakturierten Leistungen"
+              valueA={sv.srAaA} onChangeA={set("srAaA")}
+              labelB="Buchwert in Bilanz" hintB="Wert laut aktueller Bilanz"
+              valueB={sv.srAaB} onChangeB={set("srAaB")}
+              resultLabel="Stille Reserve" onApply={set("srAa")} />
+          </div>
+          <div>
+            <Row label="Stille Reserve Vorräte / Warenlager" hint="Wenn Vorräte/Warenlager zu tief bewertet sind (z.B. Warendrittel) – Betrag der Unterbewertung"><Inp value={sv.srVor} onChange={set("srVor")} positiveOnly /></Row>
+            <HerleitungBlock open={sv.srVorOpen} onToggle={()=>set("srVorOpen")(!sv.srVorOpen)}
+              formula="Stille Reserve = Tatsächlicher Marktwert − Buchwert in Bilanz"
+              labelA="Tatsächlicher Marktwert" hintA="Realistischer Veräusserungswert oder Wert ohne steuerliches Warendrittel"
+              valueA={sv.srVorA} onChangeA={set("srVorA")}
+              labelB="Buchwert in Bilanz" hintB="Wert laut aktueller Bilanz (z.B. nach Warendrittel-Abschlag)"
+              valueB={sv.srVorB} onChangeB={set("srVorB")}
+              resultLabel="Stille Reserve" onApply={set("srVor")} />
+          </div>
+          <div>
+            <Row label="Stille Reserve Forderungen" hint="Übrige Forderungen die zu tief bewertet sind – Betrag der Unterbewertung"><Inp value={sv.srForder} onChange={set("srForder")} positiveOnly /></Row>
+            <HerleitungBlock open={sv.srForderOpen} onToggle={()=>set("srForderOpen")(!sv.srForderOpen)}
+              formula="Stille Reserve = Tatsächlicher Wert − Buchwert in Bilanz"
+              labelA="Tatsächlicher Wert" hintA="Realistischer Wert der übrigen Forderungen"
+              valueA={sv.srForderA} onChangeA={set("srForderA")}
+              labelB="Buchwert in Bilanz" hintB="Wert laut aktueller Bilanz"
+              valueB={sv.srForderB} onChangeB={set("srForderB")}
+              resultLabel="Stille Reserve" onApply={set("srForder")} />
+          </div>
           {srUV>0&&<Auto label="→ Stille Reserven UV total" value={srUV} hl />}
         </Sec>
         <Sec title="Stille Reserven auf Anlagevermögen" hint="Differenz zwischen Buchwert und tatsächlichem Verkehrswert von Maschinen, Fahrzeugen, Einrichtungen.">
@@ -320,8 +392,26 @@ function TabSV({steuersatz,sv,setSv}) {
           {nbSR>0&&<Auto label={`→ Stille Reserve: ${fmt(nbSR)} × 50% = Zuschlag`} value={nbZ} />}
         </Sec>
         <Sec title="Überbewertete Passiven" hint="Wenn Passiven zu hoch ausgewiesen sind, ist das Unternehmen weniger verschuldet als bilanziert – das erhöht den Substanzwert.">
-          <Row label="Transitorische Passiven zu hoch" hint="Passive Rechnungsabgrenzungen die aufgelöst werden können – Betrag der Überhöhung"><Inp value={sv.traP} onChange={set("traP")} /></Row>
-          <Row label="Überhöhte Rückstellungen" hint="Rückstellungen für Risiken die nicht mehr bestehen oder deutlich zu hoch angesetzt wurden"><Inp value={sv.rueck} onChange={set("rueck")} /></Row>
+          <div>
+            <Row label="Transitorische Passiven zu hoch" hint="Passive Rechnungsabgrenzungen die aufgelöst werden können – Betrag der Überhöhung"><Inp value={sv.traP} onChange={set("traP")} positiveOnly /></Row>
+            <HerleitungBlock open={sv.traPOpen} onToggle={()=>set("traPOpen")(!sv.traPOpen)}
+              formula="Überhöhung = Transitorische Passiven in Bilanz − Tatsächlich gerechtfertigt"
+              labelA="Transitorische Passiven in Bilanz" hintA="Passive Rechnungsabgrenzungen laut aktueller Bilanz"
+              valueA={sv.traPA} onChangeA={set("traPA")}
+              labelB="Davon gerechtfertigt" hintB="Anteil der noch zukünftigen Ertrag abgrenzt"
+              valueB={sv.traPB} onChangeB={set("traPB")}
+              resultLabel="Überhöhung" onApply={set("traP")} />
+          </div>
+          <div>
+            <Row label="Überhöhte Rückstellungen" hint="Rückstellungen für Risiken die nicht mehr bestehen oder deutlich zu hoch angesetzt wurden"><Inp value={sv.rueck} onChange={set("rueck")} positiveOnly /></Row>
+            <HerleitungBlock open={sv.rueckOpen} onToggle={()=>set("rueckOpen")(!sv.rueckOpen)}
+              formula="Überhöhung = Rückstellung in Bilanz − Tatsächlich notwendig"
+              labelA="Rückstellung in aktueller Bilanz" hintA="Höhe der Rückstellung laut aktueller Bilanz"
+              valueA={sv.rueckA} onChangeA={set("rueckA")}
+              labelB="Tatsächlich notwendig" hintB="Realistisch erwarteter Mittelabfluss für das Risiko"
+              valueB={sv.rueckB} onChangeB={set("rueckB")}
+              resultLabel="Überhöhung" onApply={set("rueck")} />
+          </div>
         </Sec>
         <Sec title="Dividende" color="#c026d3">
           <Row label="Beschlossene Dividende" hint="Bereits traktandiert / beschlossen, noch nicht ausbezahlt"><Inp value={sv.div} onChange={set("div")} /></Row>
@@ -1075,7 +1165,24 @@ function TabPraktiker({svWert,ewWert}) {
   );
 }
 // ─── HAUPT-APP ────────────────────────────────────────────────────────────────
-const emptySv = () => ({ek:"",jg:"",deb:"",vor:"",ang:"",traA:"",traP:"",rueck:"",avBw:"",avVk:"",nbBw:"",nbVk:"",div:"",srDelk:"",srAa:"",srVor:"",srForder:"",srDelkOpen:false,srDelkBilanz:"",srDelkRecht:""});
+const emptySv = () => ({
+  ek:"",jg:"",
+  deb:"",vor:"",ang:"",traA:"",
+  srDelk:"",srAa:"",srVor:"",srForder:"",
+  avBw:"",avVk:"",nbBw:"",nbVk:"",
+  traP:"",rueck:"",
+  div:"",
+  srDelkOpen:false,srDelkBilanz:"",srDelkRecht:"",
+  debOpen:false,debA:"",debB:"",
+  vorOpen:false,vorA:"",vorB:"",
+  angOpen:false,angA:"",angB:"",
+  traAOpen:false,traAA:"",traAB:"",
+  srAaOpen:false,srAaA:"",srAaB:"",
+  srVorOpen:false,srVorA:"",srVorB:"",
+  srForderOpen:false,srForderA:"",srForderB:"",
+  traPOpen:false,traPA:"",traPB:"",
+  rueckOpen:false,rueckA:"",rueckB:"",
+});
 const emptyEw = () => ({branche:"",risiko:"mittel",zOvr:"",j1:emptyJ(),j2:emptyJ(),j3:emptyJ(),z2:false,z3:false,zbOffen:false,zbBasis:"",zbGroesse:"",zbFluk:"",zbVerk:"",zbWett:"",zbRecht:""});
 const emptyMu = () => ({branche:"",maKl:"",mOvr:"",gew:"",st:"",zi:"",aoA:"",aoE:"",lA:"",lM:"",srVj:"",srA:""});
 
