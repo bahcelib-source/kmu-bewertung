@@ -132,7 +132,7 @@ const Lbl = ({children,hint}) => (
     {hint&&<InfoTip>{hint}</InfoTip>}
   </div>
 );
-const Inp = ({value,onChange,prefix="CHF",placeholder="0"}) => {
+const Inp = ({value,onChange,prefix="CHF",placeholder="0",positiveOnly=false}) => {
   const isPct = prefix === "%";
   const display = (()=>{
     if(isPct) return value;
@@ -157,11 +157,15 @@ const Inp = ({value,onChange,prefix="CHF",placeholder="0"}) => {
     const cleaned = v.replace(/[^0-9.-]/g,"").replace(/(?!^)-/g,"").replace(/(\..*)\./g,"$1");
     onChange(cleaned);
   };
+  const isNeg = positiveOnly && String(value).startsWith("-") && value!=="-";
   return (
-    <div style={{display:"flex",alignItems:"center",background:C.card,border:`1px solid ${C.border}`,borderRadius:5,overflow:"hidden"}}>
-      {prefix&&<span style={{padding:"0 8px",color:C.dim,fontSize:10,fontFamily:T.mono,borderRight:`1px solid ${C.border}`,whiteSpace:"nowrap"}}>{prefix}</span>}
-      <input type="text" inputMode="decimal" value={display} onChange={handleChange} onWheel={e=>e.target.blur()} placeholder={placeholder}
-        style={{flex:1,padding:"0.6rem 0.7rem",background:"transparent",border:"none",outline:"none",color:C.text,fontSize:14,fontFamily:T.mono}} />
+    <div>
+      <div style={{display:"flex",alignItems:"center",background:C.card,border:`1px solid ${isNeg?C.neg:C.border}`,borderRadius:5,overflow:"hidden"}}>
+        {prefix&&<span style={{padding:"0 8px",color:C.dim,fontSize:10,fontFamily:T.mono,borderRight:`1px solid ${isNeg?C.neg:C.border}`,whiteSpace:"nowrap"}}>{prefix}</span>}
+        <input type="text" inputMode="decimal" value={display} onChange={handleChange} onWheel={e=>e.target.blur()} placeholder={placeholder}
+          style={{flex:1,padding:"0.6rem 0.7rem",background:"transparent",border:"none",outline:"none",color:isNeg?C.neg:C.text,fontSize:14,fontFamily:T.mono}} />
+      </div>
+      {isNeg&&<div style={{fontSize:10,color:C.neg,fontFamily:T.mono,marginTop:3,letterSpacing:"0.03em"}}>⚠ Bitte positiven Betrag eingeben</div>}
     </div>
   );
 };
@@ -267,10 +271,10 @@ function TabSV({steuersatz,sv,setSv}) {
           <Row label="Jahresgewinn / -verlust" hint="Gemäss Erfolgsrechnung (negativ = Verlust)"><Inp value={sv.jg} onChange={set("jg")} /></Row>
         </Sec>
         <Sec title="Überbewertete Aktiven" hint="Beträge eingeben, um die einzelne Bilanzpositionen überhöht sind. Diese Abzüge senken den Substanzwert.">
-          <Row label="Gefährdete Debitoren" hint="Kunden die voraussichtlich nicht zahlen werden – Betrag der uneinbringlichen Forderungen"><Inp value={sv.deb} onChange={set("deb")} /></Row>
-          <Row label="Vorräte / Waren zu hoch bewertet" hint="Veralteter Lagerbestand, unverkäufliche Waren – Betrag der Wertberichtigung"><Inp value={sv.vor} onChange={set("vor")} /></Row>
-          <Row label="Angefangene Arbeiten" hint="Projekte die nicht mehr fertiggestellt oder verrechnet werden können"><Inp value={sv.ang} onChange={set("ang")} /></Row>
-          <Row label="Transitorische Aktiven zu hoch" hint="Aktive Rechnungsabgrenzungen die nicht mehr benötigt werden oder bereits verbraucht sind"><Inp value={sv.traA} onChange={set("traA")} /></Row>
+          <Row label="Gefährdete Debitoren" hint="Kunden die voraussichtlich nicht zahlen werden – Betrag der uneinbringlichen Forderungen"><Inp value={sv.deb} onChange={set("deb")} positiveOnly /></Row>
+          <Row label="Vorräte / Waren zu hoch bewertet" hint="Veralteter Lagerbestand, unverkäufliche Waren – Betrag der Wertberichtigung"><Inp value={sv.vor} onChange={set("vor")} positiveOnly /></Row>
+          <Row label="Angefangene Arbeiten" hint="Projekte die nicht mehr fertiggestellt oder verrechnet werden können"><Inp value={sv.ang} onChange={set("ang")} positiveOnly /></Row>
+          <Row label="Transitorische Aktiven zu hoch" hint="Aktive Rechnungsabgrenzungen die nicht mehr benötigt werden oder bereits verbraucht sind"><Inp value={sv.traA} onChange={set("traA")} positiveOnly /></Row>
         </Sec>
         <Sec title="Stille Reserven auf Umlaufvermögen" hint="Wenn Aktiven des Umlaufvermögens zu tief bewertet sind (z.B. überhöhte Wertberichtigungen), wird die stille Reserve aufgelöst und dem Substanzwert zugeschlagen. Latente Steuern werden automatisch berücksichtigt.">
           <Row label="Stille Reserve Delkredere" hint="Wenn die Wertberichtigung auf Debitoren höher als nötig ist – Betrag der Überhöhung"><Inp value={sv.srDelk} onChange={set("srDelk")} /></Row>
