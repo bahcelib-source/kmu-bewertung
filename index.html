@@ -277,7 +277,33 @@ function TabSV({steuersatz,sv,setSv}) {
           <Row label="Transitorische Aktiven zu hoch bewertet" hint="Aktive Rechnungsabgrenzungen die nicht mehr benötigt werden oder bereits verbraucht sind"><Inp value={sv.traA} onChange={set("traA")} positiveOnly /></Row>
         </Sec>
         <Sec title="Stille Reserven auf Umlaufvermögen" hint="Wenn Aktiven des Umlaufvermögens zu tief bewertet sind (z.B. überhöhte Wertberichtigungen), wird die stille Reserve aufgelöst und dem Substanzwert zugeschlagen. Latente Steuern werden automatisch berücksichtigt.">
-          <Row label="Stille Reserve Delkredere" hint="Wenn die Wertberichtigung auf Debitoren höher als nötig ist – Betrag der Überhöhung"><Inp value={sv.srDelk} onChange={set("srDelk")} /></Row>
+          <div>
+            <Row label="Stille Reserve Delkredere" hint="Wenn die Wertberichtigung auf Debitoren höher als nötig ist – Betrag der Überhöhung"><Inp value={sv.srDelk} onChange={set("srDelk")} positiveOnly /></Row>
+            <button onClick={()=>set("srDelkOpen")(!sv.srDelkOpen)}
+              style={{marginTop:"0.4rem",padding:"0.4rem 0.7rem",background:sv.srDelkOpen?C.green:"transparent",border:`1px dashed ${sv.srDelkOpen?C.greenb:C.border}`,borderRadius:5,color:sv.srDelkOpen?C.accent:C.dim,fontSize:10,letterSpacing:"0.08em",textTransform:"uppercase",fontFamily:T.mono,cursor:"pointer"}}>
+              {sv.srDelkOpen?"▾":"▸"} Herleitung berechnen
+            </button>
+            {sv.srDelkOpen&&(()=>{
+              const delk = Math.max(0, num(sv.srDelkBilanz)-num(sv.srDelkRecht));
+              return (
+                <div style={{marginTop:"0.5rem",padding:"0.9rem 1rem",background:C.bg,borderRadius:6,display:"flex",flexDirection:"column",gap:"0.6rem"}}>
+                  <div style={{fontSize:10.5,color:C.dim,fontFamily:T.mono,lineHeight:1.6}}>
+                    Stille Reserve = Delkredere in Bilanz − gerechtfertigter Anteil
+                  </div>
+                  <Row label="Delkredere in aktueller Bilanz" hint="Wertberichtigung auf Debitoren – wie in der aktuellen Bilanz ausgewiesen"><Inp value={sv.srDelkBilanz} onChange={set("srDelkBilanz")} positiveOnly /></Row>
+                  <Row label="Davon gerechtfertigt" hint="Anteil, der tatsächlich uneinbringliche Forderungen abdeckt"><Inp value={sv.srDelkRecht} onChange={set("srDelkRecht")} positiveOnly /></Row>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0.5rem 0.7rem",background:C.card,border:`1px solid ${C.greenb}`,borderRadius:5}}>
+                    <span style={{fontSize:10.5,color:C.muted,fontFamily:T.mono,letterSpacing:"0.08em",textTransform:"uppercase"}}>= Stille Reserve</span>
+                    <span style={{fontSize:"0.95rem",color:C.accent,fontFamily:T.mono,fontWeight:600}}>{delk>0?fmt(delk):"–"}</span>
+                  </div>
+                  {delk>0&&<button onClick={()=>{set("srDelk")(String(delk));set("srDelkOpen")(false);}}
+                    style={{padding:"0.55rem 0.8rem",background:C.accent,border:"none",borderRadius:5,color:"#fff",fontSize:10.5,letterSpacing:"0.08em",textTransform:"uppercase",fontFamily:T.mono,fontWeight:600,cursor:"pointer"}}>
+                    → In Hauptfeld übernehmen
+                  </button>}
+                </div>
+              );
+            })()}
+          </div>
           <Row label="Stille Reserve Angefangene Arbeiten" hint="Wenn angefangene Arbeiten zu tief bewertet sind – Differenz zum effektiven Wert"><Inp value={sv.srAa} onChange={set("srAa")} /></Row>
           <Row label="Stille Reserve Vorräte / Warenlager" hint="Wenn Vorräte/Warenlager zu tief bewertet sind (z.B. Warendrittel) – Betrag der Unterbewertung"><Inp value={sv.srVor} onChange={set("srVor")} /></Row>
           <Row label="Stille Reserve Forderungen" hint="Übrige Forderungen die zu tief bewertet sind – Betrag der Unterbewertung"><Inp value={sv.srForder} onChange={set("srForder")} /></Row>
@@ -1049,7 +1075,7 @@ function TabPraktiker({svWert,ewWert}) {
   );
 }
 // ─── HAUPT-APP ────────────────────────────────────────────────────────────────
-const emptySv = () => ({ek:"",jg:"",deb:"",vor:"",ang:"",traA:"",traP:"",rueck:"",avBw:"",avVk:"",nbBw:"",nbVk:"",div:"",srDelk:"",srAa:"",srVor:"",srForder:""});
+const emptySv = () => ({ek:"",jg:"",deb:"",vor:"",ang:"",traA:"",traP:"",rueck:"",avBw:"",avVk:"",nbBw:"",nbVk:"",div:"",srDelk:"",srAa:"",srVor:"",srForder:"",srDelkOpen:false,srDelkBilanz:"",srDelkRecht:""});
 const emptyEw = () => ({branche:"",risiko:"mittel",zOvr:"",j1:emptyJ(),j2:emptyJ(),j3:emptyJ(),z2:false,z3:false,zbOffen:false,zbBasis:"",zbGroesse:"",zbFluk:"",zbVerk:"",zbWett:"",zbRecht:""});
 const emptyMu = () => ({branche:"",maKl:"",mOvr:"",gew:"",st:"",zi:"",aoA:"",aoE:"",lA:"",lM:"",srVj:"",srA:""});
 
