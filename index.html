@@ -35,6 +35,8 @@
     .bandbreite-bar { font-size: 9.5px !important; }
     .bandbreite-row .bandbreite-label { width: 80px !important; font-size: 9.5px !important; }
     .bandbreite-row .bandbreite-value { width: 80px !important; font-size: 9.5px !important; }
+    .jahre-tabelle { font-size: 10px !important; }
+    .jahre-tabelle input { font-size: 12px !important; padding: 0.4rem 0.5rem !important; }
   }
 </style>
 </head>
@@ -270,6 +272,118 @@ function JahrBlock({label,data,onChange,steuersatz}) {
           <span style={{fontSize:10,color:C.accent,fontFamily:T.mono,fontWeight:600}}>{fmt(effG)}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── JahreTabelle (kompakte tabellarische Ansicht für 1-3 Jahre) ─────────────
+function JahreTabelle({ew, setEw, steuersatz}) {
+  const yr = new Date().getFullYear();
+  const active = [
+    {key:"j1", label:yr-1, weight: ew.z3?3:ew.z2?2:1},
+    ...(ew.z2 ? [{key:"j2", label:yr-2, weight: ew.z3?2:1}] : []),
+    ...(ew.z3 ? [{key:"j3", label:yr-3, weight:1}] : []),
+  ];
+  const totalW = active.reduce((s,a)=>s+a.weight, 0);
+  const compute = d => {
+    const ebtEx = num(d.gewinn)+num(d.steuern);
+    const srV = num(d.srAkt)-num(d.srVj);
+    const lohnB = num(d.lohnAkt)-num(d.lohnMkt);
+    const aoN = num(d.aoAuf)-num(d.aoErt);
+    const ebtIn = ebtEx+srV+lohnB+aoN;
+    const steuer = ebtIn*(steuersatz/100);
+    const effG = ebtIn-steuer;
+    return {ebtEx, srV, lohnB, aoN, ebtIn, steuer, effG};
+  };
+  const m = active.map(a => compute(ew[a.key]));
+  const gewichteterGewinn = totalW>0 ? m.reduce((s, x, i) => s + x.effG * active[i].weight, 0) / totalW : 0;
+  const setField = (yearKey, field) => v => setEw(p => ({...p, [yearKey]: {...p[yearKey], [field]: v}}));
+  const cols = `minmax(140px, 0.9fr) repeat(${active.length}, minmax(80px, 1fr))`;
+  const grupp = [
+    {hd:"Jahresgewinn & Steuern", rows:[
+      {label:"Jahresgewinn ER", hint:"Reingewinn laut Erfolgsrechnung dieses Jahres", field:"gewinn", input:true},
+      {label:"+ Steuern", hint:"Bezahlte Gewinnsteuern dieser Periode", field:"steuern", input:true},
+      {label:"= EBT extern", computed:m.map(x=>x.ebtEx)},
+    ]},
+    {hd:"Veränderung stille Reserven", rows:[
+      {label:"Stille Reserven Vorjahr", hint:"Geschätzter Gesamtbetrag stille Reserven am Anfang der Periode", field:"srVj", input:true},
+      {label:"Stille Reserven aktuell", hint:"Geschätzter Gesamtbetrag stille Reserven am Ende der Periode", field:"srAkt", input:true},
+      {label:"= Veränderung", computed:m.map(x=>x.srV)},
+    ]},
+    {hd:"Unternehmerlohnbereinigung", rows:[
+      {label:"Aktueller Lohn", hint:"Effektiv bezogener Lohn inkl. Sozialleistungen", field:"lohnAkt", input:true},
+      {label:"Marktgerechter Lohn", hint:"Lohn eines externen Geschäftsführers für diese Funktion", field:"lohnMkt", input:true},
+      {label:"= Korrektur", computed:m.map(x=>x.lohnB)},
+    ]},
+    {hd:"Ausserordentliches / Betriebsfremdes", rows:[
+      {label:"Einmaliger Aufwand", hint:"z.B. Restrukturierungskosten – wird addiert", field:"aoAuf", input:true},
+      {label:"Einmaliger Ertrag", hint:"z.B. Liegenschaftsverkauf – wird subtrahiert", field:"aoErt", input:true},
+    ]},
+    {hd:"Resultat", rows:[
+      {label:"= EBT intern", computed:m.map(x=>x.ebtIn)},
+      {label:`− Neue Steuern (${steuersatz.toFixed(1)}%)`, computed:m.map(x=>-x.steuer), neg:true},
+      {label:"= Nachhaltiger Gewinn", computed:m.map(x=>x.effG), hl:true},
+    ]},
+  ];
+  return (
+    <div>
+      <div className="jahre-tabelle" style={{display:"grid", gridTemplateColumns:cols, gap:"0.35rem 0.5rem", alignItems:"center"}}>
+        <div></div>
+        {active.map((a, i) => (
+          <div key={i} style={{position:"relative", textAlign:"center", padding:"0.55rem 0.4rem", background:C.bg, borderRadius:6}}>
+            <div style={{fontSize:9, letterSpacing:"0.1em", color:C.dim, fontFamily:T.mono, textTransform:"uppercase"}}>Jahr {i+1}</div>
+            <div style={{fontSize:13, color:C.text, fontFamily:T.sans, fontWeight:600}}>{a.label}</div>
+            <div style={{fontSize:9, color:C.accent, fontFamily:T.mono}}>Gewicht ×{a.weight}</div>
+            {i>0 && (
+              <button onClick={()=>{
+                if(a.key==="j3") setEw(p=>({...p,z3:false}));
+                else if(a.key==="j2") setEw(p=>({...p,z2:false,z3:false}));
+              }} title="Jahr entfernen"
+                style={{position:"absolute",top:2,right:5,background:"none",border:"none",color:C.dim,cursor:"pointer",fontSize:14,fontFamily:T.mono,lineHeight:1,padding:0}}>×</button>
+            )}
+          </div>
+        ))}
+        {grupp.map((grp, gi) => (
+          <React.Fragment key={gi}>
+            <div style={{gridColumn:"1 / -1", padding:"0.65rem 0 0.25rem 0", fontSize:9.5, letterSpacing:"0.13em", color:C.accent, textTransform:"uppercase", fontFamily:T.mono, borderBottom:`1px solid #e8f5f1`, marginTop: gi===0?"0.5rem":"0.2rem"}}>{grp.hd}</div>
+            {grp.rows.map((r, ri) => (
+              <React.Fragment key={ri}>
+                <div style={{display:"flex", alignItems:"center", padding:"0.3rem 0", fontSize:10.5, color:r.input?C.muted:C.dim, fontFamily:T.mono, lineHeight:1.3, fontWeight:r.hl?600:400}}>
+                  <span>{r.label}</span>
+                  {r.hint && <InfoTip>{r.hint}</InfoTip>}
+                </div>
+                {r.input ? active.map((a, i) => (
+                  <Inp key={i} value={ew[a.key][r.field]} onChange={setField(a.key, r.field)} />
+                )) : (r.computed||[]).map((v, i) => (
+                  <div key={i} style={{padding:"0.4rem 0.55rem", background:r.hl?C.green:"transparent", border:r.hl?`1px solid ${C.greenb}`:`1px solid ${C.bg}`, borderRadius:4, fontSize:10.5, color:!v?C.dim:r.neg?C.neg:r.hl?C.accent:C.text, fontFamily:T.mono, fontWeight:r.hl?600:500, textAlign:"right"}}>
+                    {v===0 || isNaN(v) ? "–" : fmt(v)}
+                  </div>
+                ))}
+              </React.Fragment>
+            ))}
+          </React.Fragment>
+        ))}
+      </div>
+      <div style={{display:"flex", gap:"0.5rem", marginTop:"0.9rem", flexWrap:"wrap"}}>
+        {!ew.z2 && (
+          <button onClick={()=>setEw(p=>({...p,z2:true}))}
+            style={{padding:"0.55rem 0.9rem", background:"none", border:`1px dashed ${C.border}`, borderRadius:5, color:C.dim, fontSize:10.5, letterSpacing:"0.08em", textTransform:"uppercase", fontFamily:T.mono, cursor:"pointer"}}>
+            + Vorjahr ({yr-2}) hinzufügen
+          </button>
+        )}
+        {ew.z2 && !ew.z3 && (
+          <button onClick={()=>setEw(p=>({...p,z3:true}))}
+            style={{padding:"0.55rem 0.9rem", background:"none", border:`1px dashed ${C.border}`, borderRadius:5, color:C.dim, fontSize:10.5, letterSpacing:"0.08em", textTransform:"uppercase", fontFamily:T.mono, cursor:"pointer"}}>
+            + Vorvorjahr ({yr-3}) hinzufügen
+          </button>
+        )}
+      </div>
+      {active.length>1 && (
+        <div style={{marginTop:"0.9rem", padding:"0.9rem 1.1rem", background:C.green, border:`1px solid ${C.greenb}`, borderRadius:6, display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+          <span style={{fontSize:10.5, letterSpacing:"0.1em", color:C.accent, textTransform:"uppercase", fontFamily:T.mono, fontWeight:600}}>Gewichteter Durchschnitt (nachhaltiger Gewinn)</span>
+          <span style={{fontSize:"1.15rem", color:C.accent, fontFamily:T.mono, fontWeight:600}}>{fmt(gewichteterGewinn)}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -542,16 +656,8 @@ function TabEW({steuersatz,ew,setEw}) {
             )}
           </div>
         </Sec>
-        <Sec title="Jahresgewinne & Bereinigungen">
-          <JahrBlock label={`Jahr 1 – ${yr-1} (aktuellstes · Gewicht ×3)`} data={ew.j1} onChange={v=>set("j1")(v)} steuersatz={steuersatz} />
-          {!ew.z2?<button onClick={()=>set("z2")(true)} style={{width:"100%",padding:"0.55rem",background:"none",border:`1px dashed ${C.border}`,borderRadius:5,color:C.dim,fontSize:10,letterSpacing:"0.09em",textTransform:"uppercase",fontFamily:T.mono,cursor:"pointer"}}>+ Vorjahr hinzufügen ({yr-2})</button>:(
-            <>
-              <JahrBlock label={`Jahr 2 – ${yr-2} (Gewicht ×2)`} data={ew.j2} onChange={v=>set("j2")(v)} steuersatz={steuersatz} />
-              {!ew.z3?<button onClick={()=>set("z3")(true)} style={{width:"100%",padding:"0.55rem",background:"none",border:`1px dashed ${C.border}`,borderRadius:5,color:C.dim,fontSize:10,letterSpacing:"0.09em",textTransform:"uppercase",fontFamily:T.mono,cursor:"pointer"}}>+ Vorvorjahr hinzufügen ({yr-3})</button>:(
-                <JahrBlock label={`Jahr 3 – ${yr-3} (Gewicht ×1)`} data={ew.j3} onChange={v=>set("j3")(v)} steuersatz={steuersatz} />
-              )}
-            </>
-          )}
+        <Sec title="Jahresgewinne & Bereinigungen" hint="Alle Eingaben pro Jahr in einer kompakten Tabelle. 1 Jahr reicht für eine Schätzung, 2–3 Jahre erhöhen die Aussagekraft (Gewichtung 3:2:1).">
+          <JahreTabelle ew={ew} setEw={setEw} steuersatz={steuersatz} />
         </Sec>
       </div>
       <div className="sticky-calc" style={{position:"sticky",top:"1rem"}}>
