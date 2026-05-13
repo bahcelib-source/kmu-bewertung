@@ -271,10 +271,10 @@ function TabSV({steuersatz,sv,setSv}) {
           <Row label="Jahresgewinn / -verlust" hint="Gemäss Erfolgsrechnung (negativ = Verlust)"><Inp value={sv.jg} onChange={set("jg")} /></Row>
         </Sec>
         <Sec title="Überbewertete Aktiven" hint="Beträge eingeben, um die einzelne Bilanzpositionen überhöht sind. Diese Abzüge senken den Substanzwert.">
-          <Row label="Gefährdete Debitoren" hint="Kunden die voraussichtlich nicht zahlen werden – Betrag der uneinbringlichen Forderungen"><Inp value={sv.deb} onChange={set("deb")} positiveOnly /></Row>
-          <Row label="Vorräte / Waren zu hoch bewertet" hint="Veralteter Lagerbestand, unverkäufliche Waren – Betrag der Wertberichtigung"><Inp value={sv.vor} onChange={set("vor")} positiveOnly /></Row>
-          <Row label="Angefangene Arbeiten" hint="Projekte die nicht mehr fertiggestellt oder verrechnet werden können"><Inp value={sv.ang} onChange={set("ang")} positiveOnly /></Row>
-          <Row label="Transitorische Aktiven zu hoch" hint="Aktive Rechnungsabgrenzungen die nicht mehr benötigt werden oder bereits verbraucht sind"><Inp value={sv.traA} onChange={set("traA")} positiveOnly /></Row>
+          <Row label="Gefährdete Forderungen" hint="Kunden die voraussichtlich nicht zahlen werden – Betrag der uneinbringlichen Forderungen"><Inp value={sv.deb} onChange={set("deb")} positiveOnly /></Row>
+          <Row label="Vorräte / Warenlager zu hoch bewertet" hint="Veralteter Lagerbestand, unverkäufliche Waren – Betrag der Wertberichtigung"><Inp value={sv.vor} onChange={set("vor")} positiveOnly /></Row>
+          <Row label="Angefangene Arbeiten / noch nicht fakturierte Leistungen zu hoch bewertet" hint="Projekte die nicht mehr fertiggestellt oder verrechnet werden können – Betrag der Überhöhung"><Inp value={sv.ang} onChange={set("ang")} positiveOnly /></Row>
+          <Row label="Transitorische Aktiven zu hoch bewertet" hint="Aktive Rechnungsabgrenzungen die nicht mehr benötigt werden oder bereits verbraucht sind"><Inp value={sv.traA} onChange={set("traA")} positiveOnly /></Row>
         </Sec>
         <Sec title="Stille Reserven auf Umlaufvermögen" hint="Wenn Aktiven des Umlaufvermögens zu tief bewertet sind (z.B. überhöhte Wertberichtigungen), wird die stille Reserve aufgelöst und dem Substanzwert zugeschlagen. Latente Steuern werden automatisch berücksichtigt.">
           <Row label="Stille Reserve Delkredere" hint="Wenn die Wertberichtigung auf Debitoren höher als nötig ist – Betrag der Überhöhung"><Inp value={sv.srDelk} onChange={set("srDelk")} /></Row>
