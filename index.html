@@ -277,13 +277,18 @@ function JahrBlock({label,data,onChange,steuersatz}) {
 }
 
 // ─── JahreTabelle (kompakte tabellarische Ansicht für 1-3 Jahre) ─────────────
-function JahreTabelle({ew, setEw, steuersatz}) {
+function JahreTabelle({ew, setEw, steuersatz, sv}) {
   const yr = new Date().getFullYear();
   const active = [
     {key:"j1", label:yr-1, weight: ew.z3?3:ew.z2?2:1},
     ...(ew.z2 ? [{key:"j2", label:yr-2, weight: ew.z3?2:1}] : []),
     ...(ew.z3 ? [{key:"j3", label:yr-3, weight:1}] : []),
   ];
+  const svSrSum = sv ? (
+    num(sv.srDelk)+num(sv.srAa)+num(sv.srVor)+num(sv.srForder)
+    + Math.max(0, num(sv.avVk)-num(sv.avBw))
+    + num(sv.traP)+num(sv.rueck)
+  ) : 0;
   const totalW = active.reduce((s,a)=>s+a.weight, 0);
   const compute = d => {
     const ebtEx = num(d.gewinn)+num(d.steuern);
@@ -352,9 +357,20 @@ function JahreTabelle({ew, setEw, steuersatz}) {
                   <span>{r.label}</span>
                   {r.hint && <InfoTip>{r.hint}</InfoTip>}
                 </div>
-                {r.input ? active.map((a, i) => (
-                  <Inp key={i} value={ew[a.key][r.field]} onChange={setField(a.key, r.field)} />
-                )) : (r.computed||[]).map((v, i) => (
+                {r.input ? active.map((a, i) => {
+                  const showSrHint = r.field==="srAkt" && i===0 && svSrSum>0 && String(ew[a.key].srAkt)!==String(svSrSum);
+                  return (
+                    <div key={i}>
+                      <Inp value={ew[a.key][r.field]} onChange={setField(a.key, r.field)} />
+                      {showSrHint && (
+                        <button onClick={()=>setField(a.key,"srAkt")(String(svSrSum))}
+                          style={{marginTop:3,padding:"0.25rem 0.45rem",background:C.green,border:`1px solid ${C.greenb}`,borderRadius:4,color:C.accent,fontSize:9,letterSpacing:"0.03em",fontFamily:T.mono,cursor:"pointer",width:"100%",textAlign:"left",lineHeight:1.3}}>
+                          ↓ Aus Substanzwert: {fmt(svSrSum)}
+                        </button>
+                      )}
+                    </div>
+                  );
+                }) : (r.computed||[]).map((v, i) => (
                   <div key={i} style={{padding:"0.4rem 0.55rem", background:r.hl?C.green:"transparent", border:r.hl?`1px solid ${C.greenb}`:`1px solid ${C.bg}`, borderRadius:4, fontSize:10.5, color:!v?C.dim:r.neg?C.neg:r.hl?C.accent:C.text, fontFamily:T.mono, fontWeight:r.hl?600:500, textAlign:"right"}}>
                     {v===0 || isNaN(v) ? "–" : fmt(v)}
                   </div>
@@ -568,7 +584,7 @@ function TabSV({steuersatz,sv,setSv}) {
 }
 
 // ─── ERTRAGSWERT TAB ──────────────────────────────────────────────────────────
-function TabEW({steuersatz,ew,setEw}) {
+function TabEW({steuersatz,ew,setEw,sv}) {
   const set = f => v => setEw(p=>({...p,[f]:v}));
   const bObj  = BRANCHEN_EW.find(b=>b.v===ew.branche);
   const zBas  = bObj?.z??12;
@@ -657,7 +673,7 @@ function TabEW({steuersatz,ew,setEw}) {
           </div>
         </Sec>
         <Sec title="Jahresgewinne & Bereinigungen" hint="Alle Eingaben pro Jahr in einer kompakten Tabelle. 1 Jahr reicht für eine Schätzung, 2–3 Jahre erhöhen die Aussagekraft (Gewichtung 3:2:1).">
-          <JahreTabelle ew={ew} setEw={setEw} steuersatz={steuersatz} />
+          <JahreTabelle ew={ew} setEw={setEw} steuersatz={steuersatz} sv={sv} />
         </Sec>
       </div>
       <div className="sticky-calc" style={{position:"sticky",top:"1rem"}}>
@@ -1416,7 +1432,7 @@ function App() {
 
         {/* Tab-Inhalt */}
         {tab==="substanz"&&<TabSV steuersatz={steuersatz} sv={sv} setSv={setSv} />}
-        {tab==="ertrag"&&<TabEW steuersatz={steuersatz} ew={ew} setEw={setEw} />}
+        {tab==="ertrag"&&<TabEW steuersatz={steuersatz} ew={ew} setEw={setEw} sv={sv} />}
         {tab==="multiple"&&<TabMU mu={mu} setMu={setMu} />}
         {tab==="praktiker"&&<TabPraktiker svWert={hatSV?svWert:null} ewWert={hatEW?ewWert:null} />}
 
