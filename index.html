@@ -1547,6 +1547,154 @@ function App() {
   const muWert=ebitc>0&&mEff>0?ebitc*mEff:0;
   const hatMU=mu.gew!=="";
 
+  const generatePDF = (typ) => {
+    if(!window.jspdf){alert("PDF-Bibliothek wird noch geladen. Bitte versuche es gleich erneut.");return;}
+    try{
+      const {jsPDF}=window.jspdf;
+      const doc=new jsPDF({unit:"mm",format:"a4"});
+      const W=210,H=297,M=18,CW=W-2*M;
+      let y=M;
+      const RGB={accent:[30,111,99],text:[28,31,42],muted:[74,77,90],dim:[122,125,138],bg:[244,245,248],border:[220,223,230],green:[232,245,241],amber:[239,193,80]};
+      const setStyle=(rgb,size,weight="normal")=>{doc.setTextColor(...rgb);doc.setFontSize(size);doc.setFont("helvetica",weight);};
+      const fmtChf=v=>v===null||v===undefined||isNaN(v)?"–":"CHF "+new Intl.NumberFormat("de-CH",{maximumFractionDigits:0}).format(Math.round(v));
+      const checkPage=needed=>{if(y+needed>H-M-10){doc.addPage();y=M;}};
+      const drawLine=(x1,y1,x2,y2,rgb=RGB.border)=>{doc.setDrawColor(...rgb);doc.setLineWidth(0.2);doc.line(x1,y1,x2,y2);};
+      const drawSec=label=>{checkPage(12);setStyle(RGB.accent,8,"bold");doc.text(label.toUpperCase(),M,y);drawLine(M,y+1.5,W-M,y+1.5,RGB.accent);y+=7;};
+      const drawRow=(label,value,opts={})=>{
+        checkPage(6);
+        setStyle(opts.bold?RGB.text:RGB.muted,9,opts.bold?"bold":"normal");
+        doc.text(label,M,y);
+        const c=opts.neg?[161,74,42]:opts.accent?RGB.accent:opts.bold?RGB.text:RGB.muted;
+        setStyle(c,9,opts.bold?"bold":"normal");
+        const valStr=typeof value==="string"?value:fmtChf(value);
+        doc.text(valStr,W-M,y,{align:"right"});
+        y+=5;
+      };
+      const drawTotal=(label,value)=>{
+        checkPage(11);
+        doc.setFillColor(...RGB.green);
+        doc.setDrawColor(154,208,194);
+        doc.setLineWidth(0.3);
+        doc.rect(M,y-4,CW,7.5,"FD");
+        setStyle(RGB.accent,10,"bold");
+        doc.text(label,M+2,y+0.5);
+        doc.text(fmtChf(value),W-M-2,y+0.5,{align:"right"});
+        y+=10;
+      };
+      // ─── Header ───
+      setStyle(RGB.accent,8,"bold");
+      doc.text("SCHWEIZER KMU · BEWERTUNGSTOOL",M,y);
+      y+=7;
+      setStyle(RGB.text,22,"bold");
+      doc.text("easyValue",M,y);
+      y+=6;
+      setStyle(RGB.dim,10,"normal");
+      doc.text("Ihr Unternehmen. Einfach bewertet.",M,y);
+      y+=5;
+      setStyle(RGB.dim,8);
+      doc.text(`Erstellt am ${new Date().toLocaleDateString("de-CH")}`,M,y);
+      doc.text(typ==="substanz"?"Substanzwert-Bericht":"Vollbericht · Alle Methoden",W-M,y,{align:"right"});
+      y+=4;
+      drawLine(M,y,W-M,y,RGB.border);
+      y+=7;
+      // ─── Stammdaten ───
+      drawSec("Ihre Unternehmensdaten");
+      drawRow("Rechtsform",rf||"–");
+      drawRow("Kanton",ktObj?`${ktObj.k} – ${ktObj.n}`:"–");
+      drawRow("Steuersatz",`${steuersatz.toFixed(2)}%`);
+      y+=4;
+      const praktiker=(hatSV&&hatEW)?(2*ewWert+svWert)/3:null;
+      // ─── Zusammenfassung (nur Vollbericht) ───
+      if(typ!=="substanz"){
+        drawSec("Zusammenfassung");
+        const methoden=[
+          {l:"1. Substanzwert (netto)",v:hatSV?svWert:null},
+          {l:"2. Ertragswert (netto)",v:hatEW?ewWert:null},
+          {l:"3. Praktiker (2×EW + SW) ÷ 3",v:praktiker},
+          {l:"4. Multiple (EBITC × Multiple)",v:hatMU?muWert:null},
+        ];
+        methoden.forEach(m=>drawRow(m.l,m.v,{accent:m.v!==null}));
+        y+=2;
+        const verf=methoden.filter(m=>m.v&&m.v>0).map(m=>m.v);
+        if(verf.length>=2){
+          const minV=Math.min(...verf),maxV=Math.max(...verf),mitte=(minV+maxV)/2;
+          drawRow("Bandbreite Minimum",minV,{bold:true});
+          drawRow("Bandbreite Maximum",maxV,{bold:true});
+          drawTotal("Orientierungswert (Mitte)",mitte);
+        }
+        y+=2;
+      }
+      // ─── Substanzwert Detail ───
+      if(hatSV){
+        drawSec("Substanzwert — Berechnung");
+        drawRow("Eigenkapital ohne Jahresgewinn",num(sv.ek));
+        if(num(sv.jg)!==0) drawRow("+ Jahresgewinn / -verlust",num(sv.jg));
+        const srUV=num(sv.srDelk)+num(sv.srAa)+num(sv.srVor)+num(sv.srForder);
+        const ltUV=srUV*(steuersatz/100);
+        if(uvAbzug>0) drawRow("− Überbewertete Aktiven",-uvAbzug,{neg:true});
+        if(passivenZuschlag>0) drawRow("+ Überbewertete Passiven",passivenZuschlag);
+        if(srUV>0) drawRow("+ Stille Reserven Umlaufvermögen",srUV);
+        if(srAV>0) drawRow("+ Stille Reserven Anlagevermögen",srAV);
+        if(nbZ>0) drawRow("+ Nicht betriebsnotwendiges Vermögen (50%)",nbZ);
+        if(ltPassiven>0) drawRow("− Latente Steuern auf Passiven",-ltPassiven,{neg:true});
+        if(ltUV>0) drawRow("− Latente Steuern auf UV",-ltUV,{neg:true});
+        if(ltAV>0) drawRow("− Latente Steuern auf AV",-ltAV,{neg:true});
+        if(num(sv.div)>0) drawRow("− Beschlossene Dividende",-num(sv.div),{neg:true});
+        drawTotal("= Substanzwert (netto)",svWert);
+      }
+      // ─── Ertragswert Detail (nur Vollbericht) ───
+      if(typ!=="substanz"&&hatEW){
+        drawSec("Ertragswert — Berechnung");
+        const yr=new Date().getFullYear();
+        drawRow(`Effektiver Jahresgewinn Jahr 1 (${yr-1})`,g1);
+        if(g2!==null) drawRow(`Effektiver Jahresgewinn Jahr 2 (${yr-2})`,g2);
+        if(g3!==null) drawRow(`Effektiver Jahresgewinn Jahr 3 (${yr-3})`,g3);
+        drawRow("Gewichteter Durchschnitt (nachhaltiger Gewinn)",gD,{bold:true});
+        drawRow("÷ Kapitalisierungszinssatz",`${zEff.toFixed(2)}%`);
+        drawTotal("= Ertragswert (netto)",ewWert);
+      }
+      // ─── Multiple Detail (nur Vollbericht) ───
+      if(typ!=="substanz"&&hatMU){
+        drawSec("Multiple-Methode — Berechnung");
+        drawRow("EBITC (bereinigter EBIT vor Zinsen & Steuern)",ebitc,{bold:true});
+        drawRow("× Branchenmultiple",`${mEff.toFixed(1)}×`);
+        const bMu=BRANCHEN_MU.find(b=>b.v===mu.branche);
+        const mMu=MA_KLASSEN.find(m=>m.v===mu.maKl);
+        if(bMu&&mMu) drawRow("Branche / Grösse",`${bMu.l} · ${mMu.l}`);
+        drawTotal("= Multiple-Wert",muWert);
+      }
+      // ─── Praktiker (nur Vollbericht) ───
+      if(typ!=="substanz"&&praktiker!==null){
+        drawSec("Praktikermethode — Berechnung");
+        drawRow("Substanzwert × 1",svWert);
+        drawRow("Ertragswert × 2",2*ewWert);
+        drawRow("Summe ÷ 3",svWert+2*ewWert,{bold:true});
+        drawTotal("= Verkehrswert (Praktiker)",praktiker);
+      }
+      // ─── Disclaimer ───
+      checkPage(45);
+      y+=4;
+      drawSec("Wichtiger Hinweis");
+      setStyle(RGB.muted,8,"normal");
+      const disclaimer="Diese Berechnung ist keine Bewertung im rechtlichen Sinne, sondern eine vereinfachte Wertindikation zur Orientierung. Die Bandbreite spiegelt die methodisch begründeten Unterschiede wider und eignet sich als Verhandlungsgrundlage – nicht als verbindlicher Unternehmenswert. Für rechtlich belastbare Bewertungen empfehlen wir einen Treuhänder oder zugelassenen Bewertungsspezialisten beizuziehen.";
+      const lines=doc.splitTextToSize(disclaimer,CW);
+      doc.text(lines,M,y);
+      y+=lines.length*3.5+6;
+      // Footer auf jeder Seite
+      const totalPages=doc.internal.getNumberOfPages();
+      for(let i=1;i<=totalPages;i++){
+        doc.setPage(i);
+        setStyle(RGB.dim,7,"normal");
+        doc.text("easyvalue.ch · Steuersätze: PwC 2025 · Multiples: NIMBO CH März 2026",M,H-8);
+        doc.text(`Seite ${i} / ${totalPages}`,W-M,H-8,{align:"right"});
+      }
+      doc.save(`easyvalue-${typ==="substanz"?"substanzwert":"vollbericht"}-${new Date().toISOString().slice(0,10)}.pdf`);
+    }catch(e){
+      console.error(e);
+      alert("Fehler beim PDF erstellen: "+e.message);
+    }
+  };
+
   return (
     <div className="app-padding" style={{minHeight:"100vh",background:C.bg,padding:"3rem 1.5rem"}}>
       <div style={{maxWidth:960,margin:"0 auto"}}>
@@ -1603,29 +1751,22 @@ function App() {
         {/* PDF Buttons */}
         <div className="responsive-pdf" style={{marginTop:"2rem",display:"flex",gap:"1rem",flexWrap:"wrap"}}>
           <div style={{flex:1,minWidth:220,background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"1.3rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
-            <div style={{fontSize:10.5,letterSpacing:"0.15em",color:C.accent,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.4rem"}}>Gratis</div>
+            <div style={{fontSize:10.5,letterSpacing:"0.15em",color:C.accent,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.4rem"}}>Substanzwert</div>
             <div style={{fontSize:13,color:C.text,fontFamily:T.sans,fontWeight:600,marginBottom:"0.3rem"}}>Substanzwert-Bericht</div>
-            <div style={{fontSize:10,color:C.dim,fontFamily:T.mono,marginBottom:"0.9rem"}}>PDF mit Substanzwert-Berechnung</div>
-            <a href="bericht_substanzwert.pdf" target="_blank"
-              style={{display:"block",textAlign:"center",padding:"0.6rem",background:C.green,border:`1px solid ${C.greenb}`,borderRadius:5,color:C.accent,fontSize:11,fontFamily:T.mono,fontWeight:600,textDecoration:"none",letterSpacing:"0.08em"}}>
-              PDF ÖFFNEN ↗
-            </a>
+            <div style={{fontSize:10,color:C.dim,fontFamily:T.mono,marginBottom:"0.9rem"}}>PDF nur mit Substanzwert-Berechnung</div>
+            <button onClick={()=>generatePDF("substanz")} disabled={!hatSV}
+              style={{display:"block",width:"100%",textAlign:"center",padding:"0.6rem",background:hatSV?C.green:C.bg,border:`1px solid ${hatSV?C.greenb:C.border}`,borderRadius:5,color:hatSV?C.accent:C.dim,fontSize:11,fontFamily:T.mono,fontWeight:600,letterSpacing:"0.08em",cursor:hatSV?"pointer":"not-allowed"}}>
+              {hatSV?"PDF GENERIEREN ↓":"ERST SUBSTANZWERT BERECHNEN"}
+            </button>
           </div>
-          <div style={{flex:1,minWidth:220,background:C.card,border:`1px solid ${bezahlt?"#9ad0c2":C.border}`,borderRadius:10,padding:"1.3rem",opacity:bezahlt?1:0.75,boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
-            <div style={{fontSize:10.5,letterSpacing:"0.15em",color:"#8a7530",textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.4rem"}}>{bezahlt?"✓ Freigeschaltet":"CHF 49 · Vollbericht"}</div>
-            <div style={{fontSize:13,color:C.text,fontFamily:T.sans,fontWeight:600,marginBottom:"0.3rem"}}>Alle 4 Methoden + Grafik</div>
-            <div style={{fontSize:10,color:C.dim,fontFamily:T.mono,marginBottom:"0.9rem"}}>Bandbreite Min/Max · Detailberechnungen</div>
-            {bezahlt?(
-              <a href="bericht_vollstaendig.pdf" target="_blank"
-                style={{display:"block",textAlign:"center",padding:"0.6rem",background:"#fef3d8",border:"1px solid #d8b860",borderRadius:5,color:"#8a7530",fontSize:11,fontFamily:T.mono,fontWeight:600,textDecoration:"none",letterSpacing:"0.08em"}}>
-                PDF ÖFFNEN ↗
-              </a>
-            ):(
-              <button onClick={()=>setModal(true)}
-                style={{width:"100%",padding:"0.6rem",background:C.bg,border:`1px solid ${C.border}`,borderRadius:5,color:C.dim,fontSize:11,fontFamily:T.mono,fontWeight:600,cursor:"pointer",letterSpacing:"0.08em"}}>
-                🔒 CHF 49 – FREISCHALTEN
-              </button>
-            )}
+          <div style={{flex:1,minWidth:220,background:C.card,border:`1px solid #9ad0c2`,borderRadius:10,padding:"1.3rem",boxShadow:"0 1px 3px rgba(28,31,42,0.04)"}}>
+            <div style={{fontSize:10.5,letterSpacing:"0.15em",color:"#8a7530",textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.4rem"}}>Vollbericht</div>
+            <div style={{fontSize:13,color:C.text,fontFamily:T.sans,fontWeight:600,marginBottom:"0.3rem"}}>Alle 4 Methoden</div>
+            <div style={{fontSize:10,color:C.dim,fontFamily:T.mono,marginBottom:"0.9rem"}}>Bandbreite Min/Max · Detailberechnungen pro Methode</div>
+            <button onClick={()=>generatePDF("voll")} disabled={!hatSV&&!hatEW&&!hatMU}
+              style={{display:"block",width:"100%",textAlign:"center",padding:"0.6rem",background:(hatSV||hatEW||hatMU)?"#fef3d8":C.bg,border:`1px solid ${(hatSV||hatEW||hatMU)?"#d8b860":C.border}`,borderRadius:5,color:(hatSV||hatEW||hatMU)?"#8a7530":C.dim,fontSize:11,fontFamily:T.mono,fontWeight:600,letterSpacing:"0.08em",cursor:(hatSV||hatEW||hatMU)?"pointer":"not-allowed"}}>
+              {(hatSV||hatEW||hatMU)?"PDF GENERIEREN ↓":"BITTE WERTE EINGEBEN"}
+            </button>
           </div>
         </div>
 
