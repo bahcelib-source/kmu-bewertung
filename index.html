@@ -351,6 +351,20 @@ function JahreTabelle({ew, setEw, steuersatz, sv}) {
   ];
   return (
     <div>
+      <div style={{display:"flex", gap:"0.5rem", marginBottom:"0.9rem", flexWrap:"wrap"}}>
+        {!ew.z2 && (
+          <button onClick={()=>setEw(p=>({...p,z2:true}))}
+            style={{padding:"0.55rem 0.9rem", background:"none", border:`1px dashed ${C.border}`, borderRadius:5, color:C.dim, fontSize:10.5, letterSpacing:"0.08em", textTransform:"uppercase", fontFamily:T.mono, cursor:"pointer"}}>
+            + Vorjahr ({yr-2}) hinzufügen
+          </button>
+        )}
+        {ew.z2 && !ew.z3 && (
+          <button onClick={()=>setEw(p=>({...p,z3:true}))}
+            style={{padding:"0.55rem 0.9rem", background:"none", border:`1px dashed ${C.border}`, borderRadius:5, color:C.dim, fontSize:10.5, letterSpacing:"0.08em", textTransform:"uppercase", fontFamily:T.mono, cursor:"pointer"}}>
+            + Vorvorjahr ({yr-3}) hinzufügen
+          </button>
+        )}
+      </div>
       <div className="jahre-tabelle" style={{display:"grid", gridTemplateColumns:cols, gap:"0.35rem 0.5rem", alignItems:"center"}}>
         <div></div>
         {active.map((a, i) => (
@@ -456,20 +470,6 @@ function JahreTabelle({ew, setEw, steuersatz, sv}) {
             })()}
           </React.Fragment>
         ))}
-      </div>
-      <div style={{display:"flex", gap:"0.5rem", marginTop:"0.9rem", flexWrap:"wrap"}}>
-        {!ew.z2 && (
-          <button onClick={()=>setEw(p=>({...p,z2:true}))}
-            style={{padding:"0.55rem 0.9rem", background:"none", border:`1px dashed ${C.border}`, borderRadius:5, color:C.dim, fontSize:10.5, letterSpacing:"0.08em", textTransform:"uppercase", fontFamily:T.mono, cursor:"pointer"}}>
-            + Vorjahr ({yr-2}) hinzufügen
-          </button>
-        )}
-        {ew.z2 && !ew.z3 && (
-          <button onClick={()=>setEw(p=>({...p,z3:true}))}
-            style={{padding:"0.55rem 0.9rem", background:"none", border:`1px dashed ${C.border}`, borderRadius:5, color:C.dim, fontSize:10.5, letterSpacing:"0.08em", textTransform:"uppercase", fontFamily:T.mono, cursor:"pointer"}}>
-            + Vorvorjahr ({yr-3}) hinzufügen
-          </button>
-        )}
       </div>
       {active.length>1 && (
         <div style={{marginTop:"0.9rem", padding:"0.9rem 1.1rem", background:C.green, border:`1px solid ${C.greenb}`, borderRadius:6, display:"flex", justifyContent:"space-between", alignItems:"center"}}>
@@ -1509,7 +1509,7 @@ function UpsellModal({onClose,onBuy}) {
 
 function App() {
   const [tab,setTab]=useState("substanz");
-  const [bezahlt,setBezahlt]=useState(false);
+  const [bezahlt,setBezahlt]=useState(true);
   const [modal,setModal]=useState(false);
   const [rf,setRf]=useState("");
   const [kt,setKt]=useState("");
