@@ -197,6 +197,16 @@ const HerleitungBlock = ({open,onToggle,formula,labelA,hintA,valueA,onChangeA,la
     </>
   );
 };
+const AusEwHint = ({val, cur, onApply, source="Ertragswert"}) => {
+  if (!val || num(val) === 0) return null;
+  if (String(cur)===String(val) || String(cur)===String(num(val))) return null;
+  return (
+    <button onClick={() => onApply(String(val))}
+      style={{marginTop:3, padding:"0.25rem 0.5rem", background:C.green, border:`1px solid ${C.greenb}`, borderRadius:4, color:C.accent, fontSize:9, fontFamily:T.mono, cursor:"pointer", width:"100%", textAlign:"left", letterSpacing:"0.02em", lineHeight:1.3}}>
+      ↓ Aus {source} (Jahr 1): {fmt(num(val))}
+    </button>
+  );
+};
 const Sel = ({value,onChange,options,placeholder}) => (
   <div style={{position:"relative"}}>
     <select value={value} onChange={e=>onChange(e.target.value)}
@@ -763,8 +773,10 @@ function TabEW({steuersatz,ew,setEw,sv}) {
 }
 
 // ─── MULTIPLE TAB ─────────────────────────────────────────────────────────────
-function TabMU({mu,setMu}) {
+function TabMU({mu,setMu,ew,setEw}) {
   const set = f => v => setMu(p=>({...p,[f]:v}));
+  const j1 = ew?.j1 || {};
+  const setEwField = f => v => setEw(p=>({...p,[f]:v}));
   const mVors = MULTIPLES_CH[mu.branche]?.[mu.maKl]??null;
   const mEff  = mu.mOvr!==""?num(mu.mOvr):(mVors??0);
   const g=num(mu.gew), s=num(mu.st), z=num(mu.zi);
@@ -787,26 +799,108 @@ function TabMU({mu,setMu}) {
           <Row label="Anzahl Mitarbeitende (VZÄ)" hint="Vollzeitäquivalente inkl. Inhaber"><Sel value={mu.maKl} onChange={v=>setMu(p=>({...p,maKl:v,mOvr:""}))} options={MA_KLASSEN} placeholder="Grösse wählen…" /></Row>
         </Sec>
         <Sec title="EBITC – Herleitung" accent>
-          <Row label="Jahresgewinn gemäss Erfolgsrechnung"><Inp value={mu.gew} onChange={set("gew")} /></Row>
-          <Row label="+ Steuern" hint="Bezahlte Gewinnsteuern der Periode"><Inp value={mu.st} onChange={set("st")} /></Row>
+          <Row label="Jahresgewinn gemäss Erfolgsrechnung">
+            <Inp value={mu.gew} onChange={set("gew")} />
+            <AusEwHint val={j1.gewinn} cur={mu.gew} onApply={set("gew")} />
+          </Row>
+          <Row label="+ Steuern" hint="Bezahlte Gewinnsteuern der Periode">
+            <Inp value={mu.st} onChange={set("st")} />
+            <AusEwHint val={j1.steuern} cur={mu.st} onApply={set("st")} />
+          </Row>
           <Auto label="= EBIT (nach Steuern)" value={ebit} />
           <Div/>
           <Row label="+ Zinsaufwand" hint="Finanzaufwand / Schuldzinsen aus Erfolgsrechnung"><Inp value={mu.zi} onChange={set("zi")} /></Row>
           <Auto label="= EBIT (vor Zinsen & Steuern)" value={ebitZ} />
           <Div/>
           <SubH>Korrekturen (C = Corrections)</SubH>
-          <Row label="+ Einmaliger Aufwand" hint="z.B. Restrukturierung, Sonderabschreibung"><Inp value={mu.aoA} onChange={set("aoA")} /></Row>
-          <Row label="− Einmaliger Ertrag" hint="z.B. Liegenschaftsverkauf, Subventionen"><Inp value={mu.aoE} onChange={set("aoE")} /></Row>
+          <Row label="+ Einmaliger Aufwand" hint="z.B. Restrukturierung, Sonderabschreibung">
+            <Inp value={mu.aoA} onChange={set("aoA")} />
+            <AusEwHint val={j1.aoAuf} cur={mu.aoA} onApply={set("aoA")} />
+          </Row>
+          <Row label="− Einmaliger Ertrag" hint="z.B. Liegenschaftsverkauf, Subventionen">
+            <Inp value={mu.aoE} onChange={set("aoE")} />
+            <AusEwHint val={j1.aoErt} cur={mu.aoE} onApply={set("aoE")} />
+          </Row>
           <Div/>
           <SubH>+/− Unternehmerlohnbereinigung</SubH>
-          <Row label="Aktueller Unternehmerlohn" hint="Effektiv bezogener Lohn inkl. Sozialleistungen"><Inp value={mu.lA} onChange={set("lA")} /></Row>
-          <Row label="Marktgerechter Lohn" hint="Lohn eines externen Geschäftsführers für diese Funktion"><Inp value={mu.lM} onChange={set("lM")} /></Row>
+          <Row label="Aktueller Unternehmerlohn" hint="Effektiv bezogener Lohn inkl. Sozialleistungen">
+            <Inp value={mu.lA} onChange={set("lA")} />
+            <AusEwHint val={j1.lohnAkt} cur={mu.lA} onApply={set("lA")} />
+          </Row>
+          <Row label="Marktgerechter Lohn" hint="Lohn eines externen Geschäftsführers für diese Funktion">
+            <Inp value={mu.lM} onChange={set("lM")} />
+            <AusEwHint val={j1.lohnMkt} cur={mu.lM} onApply={set("lM")} />
+          </Row>
           {hatL&&<Auto label={lLbl} value={lB} />}
           <Div/>
           <SubH>+/− Veränderung stille Reserven</SubH>
-          <Row label="Stille Reserven Vorjahr" hint="Geschätzter Gesamtbetrag"><Inp value={mu.srVj} onChange={set("srVj")} /></Row>
-          <Row label="Stille Reserven aktuelles Jahr"><Inp value={mu.srA} onChange={set("srA")} /></Row>
+          <Row label="Stille Reserven Vorjahr" hint="Geschätzter Gesamtbetrag">
+            <Inp value={mu.srVj} onChange={set("srVj")} />
+            <AusEwHint val={j1.srVj} cur={mu.srVj} onApply={set("srVj")} />
+          </Row>
+          <Row label="Stille Reserven aktuelles Jahr">
+            <Inp value={mu.srA} onChange={set("srA")} />
+            <AusEwHint val={j1.srAkt} cur={mu.srA} onApply={set("srA")} />
+          </Row>
           {hatSR&&<Auto label={srLbl} value={srV} />}
+          {ew && (()=>{
+            const svvjUV = num(ew.svvjSrDelk)+num(ew.svvjSrAa)+num(ew.svvjSrVor)+num(ew.svvjSrForder);
+            const svvjAV = Math.max(0, num(ew.svvjAvVk)-num(ew.svvjAvBw));
+            const svvjPass = num(ew.svvjTraP)+num(ew.svvjRueck);
+            const svvjTotal = svvjUV+svvjAV+svvjPass;
+            const yr = new Date().getFullYear();
+            const A = "#8a6520", AB = "#e8c890", ABG = "#fef9f0";
+            return (
+              <div style={{marginTop:"0.4rem"}}>
+                <button onClick={()=>setEwField("svvjOpen")(!ew.svvjOpen)}
+                  style={{width:"100%",padding:"0.5rem 0.8rem",background:ew.svvjOpen?ABG:"transparent",border:`1px dashed ${ew.svvjOpen?AB:C.border}`,borderRadius:5,color:ew.svvjOpen?A:C.dim,fontSize:10,letterSpacing:"0.08em",textTransform:"uppercase",fontFamily:T.mono,cursor:"pointer",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>{ew.svvjOpen?"▾":"▸"} Herleitung stille Reserven Vorjahr (optional)</span>
+                  {svvjTotal>0&&<span style={{fontFamily:T.mono,color:A,fontWeight:600}}>{fmt(svvjTotal)}</span>}
+                </button>
+                {ew.svvjOpen&&(
+                  <div style={{marginTop:"0.6rem",padding:"1rem",background:ABG,border:`1px solid ${AB}`,borderRadius:6,display:"flex",flexDirection:"column",gap:"0.7rem"}}>
+                    <div style={{fontSize:11,color:A,fontFamily:T.mono,lineHeight:1.6,padding:"0.4rem 0.6rem",background:"#fef3d8",borderRadius:4,fontWeight:600}}>
+                      ⓘ Eingaben für den Anfangsbestand stille Reserven – Stand <strong>per 31.12.{yr-2}</strong> (= Ende Vorjahr). Synchronisiert mit Ertragswert-Tab.
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,letterSpacing:"0.12em",color:A,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.4rem",paddingBottom:"0.2rem",borderBottom:`1px solid ${AB}`}}>Stille Reserven Umlaufvermögen (Vorjahr)</div>
+                      <div style={{display:"flex",flexDirection:"column",gap:"0.5rem"}}>
+                        <Row label="Stille Reserve Delkredere"><Inp value={ew.svvjSrDelk} onChange={setEwField("svvjSrDelk")} positiveOnly /></Row>
+                        <Row label="Stille Reserve Angefangene Arbeiten"><Inp value={ew.svvjSrAa} onChange={setEwField("svvjSrAa")} positiveOnly /></Row>
+                        <Row label="Stille Reserve Vorräte / Warenlager"><Inp value={ew.svvjSrVor} onChange={setEwField("svvjSrVor")} positiveOnly /></Row>
+                        <Row label="Stille Reserve Forderungen"><Inp value={ew.svvjSrForder} onChange={setEwField("svvjSrForder")} positiveOnly /></Row>
+                        {svvjUV>0&&<Auto label="→ Total UV" value={svvjUV} />}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,letterSpacing:"0.12em",color:A,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.4rem",paddingBottom:"0.2rem",borderBottom:`1px solid ${AB}`}}>Stille Reserven Anlagevermögen (Vorjahr)</div>
+                      <div style={{display:"flex",flexDirection:"column",gap:"0.5rem"}}>
+                        <Row label="Buchwert Anlagevermögen Vorjahr"><Inp value={ew.svvjAvBw} onChange={setEwField("svvjAvBw")} positiveOnly /></Row>
+                        <Row label="Tatsächlicher Verkehrswert Vorjahr"><Inp value={ew.svvjAvVk} onChange={setEwField("svvjAvVk")} positiveOnly /></Row>
+                        {svvjAV>0&&<Auto label="→ Stille Reserve AV" value={svvjAV} />}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,letterSpacing:"0.12em",color:A,textTransform:"uppercase",fontFamily:T.mono,marginBottom:"0.4rem",paddingBottom:"0.2rem",borderBottom:`1px solid ${AB}`}}>Überbewertete Passiven (Vorjahr)</div>
+                      <div style={{display:"flex",flexDirection:"column",gap:"0.5rem"}}>
+                        <Row label="Transitorische Passiven zu hoch"><Inp value={ew.svvjTraP} onChange={setEwField("svvjTraP")} positiveOnly /></Row>
+                        <Row label="Überhöhte Rückstellungen"><Inp value={ew.svvjRueck} onChange={setEwField("svvjRueck")} positiveOnly /></Row>
+                        {svvjPass>0&&<Auto label="→ Total Passiven" value={svvjPass} />}
+                      </div>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0.7rem 0.9rem",background:"#fef3d8",border:`1px solid ${AB}`,borderRadius:6}}>
+                      <span style={{fontSize:10.5,letterSpacing:"0.1em",color:A,textTransform:"uppercase",fontFamily:T.mono,fontWeight:600}}>= Total stille Reserven Vorjahr</span>
+                      <span style={{fontSize:"1.1rem",color:A,fontFamily:T.mono,fontWeight:600}}>{svvjTotal>0?fmt(svvjTotal):"–"}</span>
+                    </div>
+                    {svvjTotal>0&&<button onClick={()=>{set("srVj")(String(svvjTotal));setEwField("svvjOpen")(false);}}
+                      style={{padding:"0.65rem 0.9rem",background:A,border:"none",borderRadius:5,color:"#fff",fontSize:11,letterSpacing:"0.08em",textTransform:"uppercase",fontFamily:T.mono,fontWeight:600,cursor:"pointer"}}>
+                      → Als "Stille Reserven Vorjahr" übernehmen
+                    </button>}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           <div style={{borderTop:`1px solid ${C.border}`}} />
           <Auto label="= EBITC (bereinigter EBIT vor Zinsen & Steuern)" value={ebitc} hl />
         </Sec>
@@ -1491,7 +1585,7 @@ function App() {
         {/* Tab-Inhalt */}
         {tab==="substanz"&&<TabSV steuersatz={steuersatz} sv={sv} setSv={setSv} />}
         {tab==="ertrag"&&<TabEW steuersatz={steuersatz} ew={ew} setEw={setEw} sv={sv} />}
-        {tab==="multiple"&&<TabMU mu={mu} setMu={setMu} />}
+        {tab==="multiple"&&<TabMU mu={mu} setMu={setMu} ew={ew} setEw={setEw} />}
         {tab==="praktiker"&&<TabPraktiker svWert={hatSV?svWert:null} ewWert={hatEW?ewWert:null} />}
 
         {/* Ergebnis */}
