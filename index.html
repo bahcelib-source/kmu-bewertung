@@ -1527,10 +1527,12 @@ function App() {
   const nbZ=nbSR*0.5;
   const uvAbzug=num(sv.deb)+num(sv.vor)+num(sv.ang)+num(sv.traA);
   const passivenZuschlag=num(sv.traP)+num(sv.rueck);
+  const srUV=num(sv.srDelk)+num(sv.srAa)+num(sv.srVor)+num(sv.srForder);
   const ltPassiven=passivenZuschlag*(steuersatz/100);
   const ltAV=srAV*(steuersatz/100);
-  const lt=ltPassiven+ltAV;
-  const svWert=num(sv.ek)+num(sv.jg)-uvAbzug+passivenZuschlag+srAV-lt+nbZ-num(sv.div);
+  const ltUV=srUV*(steuersatz/100);
+  const lt=ltPassiven+ltAV+ltUV;
+  const svWert=num(sv.ek)+num(sv.jg)-uvAbzug+passivenZuschlag+srAV+srUV-lt+nbZ-num(sv.div);
   const hatSV=sv.ek!=="";
 
   const calcJ=d=>{const ex=num(d.gewinn)+num(d.steuern),sr=num(d.srAkt)-num(d.srVj),lb=num(d.lohnAkt)-num(d.lohnMkt),ao=num(d.aoAuf)-num(d.aoErt),inn=ex+sr+lb+ao;return inn-inn*(steuersatz/100);};
