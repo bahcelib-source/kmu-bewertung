@@ -1607,33 +1607,68 @@ function App() {
       y+=4;
       drawLine(M,y,W-M,y,RGB.border);
       y+=7;
+      const praktiker=(hatSV&&hatEW)?(2*ewWert+svWert)/3:null;
+      // ─── Zusammenfassung mit Bandbreite-Grafik (nur Vollbericht) ───
+      if(typ!=="substanz"){
+        const methoden=[
+          {l:"Substanzwert (netto)",s:"Substanz",v:hatSV?svWert:null},
+          {l:"Ertragswert (netto)",s:"Ertrag",v:hatEW?ewWert:null},
+          {l:"Praktiker (2×EW + SW) ÷ 3",s:"Praktiker",v:praktiker},
+          {l:"Multiple (EBITC × Multiple)",s:"Multiple",v:hatMU?muWert:null},
+        ];
+        const verf=methoden.filter(m=>m.v&&m.v>0);
+        if(verf.length>=2){
+          drawSec("Bandbreite — Verhandlungsbasis");
+          checkPage(45);
+          const barX=M, barY=y, barW=CW, barH=10;
+          const sorted=[...verf].sort((a,b)=>a.v-b.v);
+          const minV=sorted[0].v, maxV=sorted[sorted.length-1].v;
+          const mitte=(minV+maxV)/2;
+          // Gradient: rot → gelb → grün
+          const segs=80;
+          for(let i=0;i<segs;i++){
+            const t=i/segs;
+            let r,g,b;
+            if(t<0.5){const u=t*2;r=200+(235-200)*u;g=60+(180-60)*u;b=60;}
+            else{const u=(t-0.5)*2;r=235-(235-80)*u;g=180-(180-160)*u;b=60+(100-60)*u;}
+            doc.setFillColor(Math.round(r),Math.round(g),Math.round(b));
+            doc.rect(barX+(barW*i/segs),barY,(barW/segs)+0.4,barH,"F");
+          }
+          doc.setDrawColor(180,180,180);
+          doc.setLineWidth(0.3);
+          doc.rect(barX,barY,barW,barH);
+          // Methoden-Markierungen mit Labels
+          sorted.forEach((m,idx)=>{
+            const pct=maxV>minV?(m.v-minV)/(maxV-minV):0.5;
+            const mx=barX+pct*barW;
+            doc.setDrawColor(40,40,40);
+            doc.setLineWidth(0.6);
+            doc.line(mx,barY-2,mx,barY+barH+2);
+            setStyle(RGB.text,7,"bold");
+            doc.text(m.s,mx,barY+barH+6.5,{align:"center"});
+            setStyle(RGB.muted,6,"normal");
+            doc.text(fmtChf(m.v).replace("CHF ",""),mx,barY+barH+10,{align:"center"});
+          });
+          // Min/Mittelwert/Max
+          setStyle(RGB.text,8,"bold");
+          doc.text("Min: "+fmtChf(minV),barX,barY+barH+17);
+          doc.text("Max: "+fmtChf(maxV),barX+barW,barY+barH+17,{align:"right"});
+          setStyle(RGB.accent,9,"bold");
+          doc.text("Mittelwert: "+fmtChf(mitte),barX+barW/2,barY+barH+17,{align:"center"});
+          y=barY+barH+24;
+        } else {
+          drawSec("Zusammenfassung");
+        }
+        // Methoden-Liste
+        methoden.forEach(m=>drawRow(m.l,m.v,{accent:m.v!==null}));
+        y+=4;
+      }
       // ─── Stammdaten ───
       drawSec("Ihre Unternehmensdaten");
       drawRow("Rechtsform",rf||"–");
       drawRow("Kanton",ktObj?`${ktObj.k} – ${ktObj.n}`:"–");
       drawRow("Steuersatz",`${steuersatz.toFixed(2)}%`);
       y+=4;
-      const praktiker=(hatSV&&hatEW)?(2*ewWert+svWert)/3:null;
-      // ─── Zusammenfassung (nur Vollbericht) ───
-      if(typ!=="substanz"){
-        drawSec("Zusammenfassung");
-        const methoden=[
-          {l:"1. Substanzwert (netto)",v:hatSV?svWert:null},
-          {l:"2. Ertragswert (netto)",v:hatEW?ewWert:null},
-          {l:"3. Praktiker (2×EW + SW) ÷ 3",v:praktiker},
-          {l:"4. Multiple (EBITC × Multiple)",v:hatMU?muWert:null},
-        ];
-        methoden.forEach(m=>drawRow(m.l,m.v,{accent:m.v!==null}));
-        y+=2;
-        const verf=methoden.filter(m=>m.v&&m.v>0).map(m=>m.v);
-        if(verf.length>=2){
-          const minV=Math.min(...verf),maxV=Math.max(...verf),mitte=(minV+maxV)/2;
-          drawRow("Bandbreite Minimum",minV,{bold:true});
-          drawRow("Bandbreite Maximum",maxV,{bold:true});
-          drawTotal("Orientierungswert (Mitte)",mitte);
-        }
-        y+=2;
-      }
       // ─── Substanzwert Detail ───
       if(hatSV){
         drawSec("Substanzwert — Berechnung");
@@ -1681,21 +1716,20 @@ function App() {
         drawRow("Summe ÷ 3",svWert+2*ewWert,{bold:true});
         drawTotal("= Verkehrswert (Praktiker)",praktiker);
       }
-      // ─── Disclaimer ───
-      checkPage(45);
-      y+=4;
-      drawSec("Wichtiger Hinweis");
-      setStyle(RGB.muted,8,"normal");
-      const disclaimer="Diese Berechnung ist keine Bewertung im rechtlichen Sinne, sondern eine vereinfachte Wertindikation zur Orientierung. Die Bandbreite spiegelt die methodisch begründeten Unterschiede wider und eignet sich als Verhandlungsgrundlage – nicht als verbindlicher Unternehmenswert. Für rechtlich belastbare Bewertungen empfehlen wir einen Treuhänder oder zugelassenen Bewertungsspezialisten beizuziehen.";
-      const lines=doc.splitTextToSize(disclaimer,CW);
+      // ─── Philosophie & Wichtiger Hinweis ───
+      checkPage(80);
+      y+=6;
+      drawSec("Unsere Philosophie & Wichtiger Hinweis");
+      setStyle(RGB.muted,8.5,"normal");
+      const philosophy="easyValue versteht sich als Werkzeug für eine erste Wertorientierung — als Verhandlungsgrundlage, nicht als rechtlich verbindliche Unternehmensbewertung.\n\nWir nutzen klassische Bewertungsmethoden, die in der Schweizer KMU-Praxis weite Anwendung finden:\n\n• Substanzwert: Wertschätzung auf Basis der bilanziellen Substanz, bereinigt um stille Reserven und latente Steuern.\n• Ertragswert: Kapitalisierung des nachhaltigen Reingewinns mit einem risikoadjustierten Zinssatz.\n• Praktikermethode: Schweizer Standard nach ESTV-Kreisschreiben Nr. 28 — gewichtetes Mittel aus zweimal Ertragswert und einmal Substanzwert.\n• Multiple-Methode: Marktorientierter Ansatz auf Basis von Branchen-Multiples (Datenbasis NIMBO CH).\n\nDie ermittelte Bandbreite spiegelt methodisch begründete Unterschiede wider — jede Methode beleuchtet einen anderen Aspekt der Wertfindung. Der Mittelwert dient als Orientierung; das tatsächliche Verhandlungsergebnis hängt von vielen weiteren Faktoren ab (Kaufmotive, Marktlage, Verhandlungsposition, Synergien, immaterielle Werte etc.).\n\nFür rechtlich belastbare Bewertungen (z.B. bei Erbschaft, Scheidung, M&A-Transaktionen) empfehlen wir den Beizug eines zugelassenen Treuhänders oder spezialisierten Bewertungsexperten.\n\nDatenquellen: Steuersätze nach PwC Tax Summaries 2025. Branchen-Multiples nach NIMBO CH (März 2026).\n\neasyvalue.ch — Ihr Unternehmen. Einfach bewertet.";
+      const lines=doc.splitTextToSize(philosophy,CW);
       doc.text(lines,M,y);
-      y+=lines.length*3.5+6;
+      y+=lines.length*4+6;
       // Footer auf jeder Seite
       const totalPages=doc.internal.getNumberOfPages();
       for(let i=1;i<=totalPages;i++){
         doc.setPage(i);
         setStyle(RGB.dim,7,"normal");
-        doc.text("easyvalue.ch · Steuersätze: PwC 2025 · Multiples: NIMBO CH März 2026",M,H-8);
         doc.text(`Seite ${i} / ${totalPages}`,W-M,H-8,{align:"right"});
       }
       doc.save(`easyvalue-${typ==="substanz"?"substanzwert":"vollbericht"}-${new Date().toISOString().slice(0,10)}.pdf`);
