@@ -325,7 +325,7 @@ function JahreTabelle({ew, setEw, steuersatz, sv}) {
   const cols = `minmax(140px, 0.9fr) repeat(${active.length}, minmax(80px, 1fr))`;
   const grupp = [
     {hd:"Jahresgewinn & Steuern", rows:[
-      {label:"Jahresgewinn ER", hint:"Reingewinn laut Erfolgsrechnung dieses Jahres", field:"gewinn", input:true},
+      {label:"Jahresergebnis", hint:"Reingewinn (bzw. -verlust) laut Erfolgsrechnung dieses Jahres", field:"gewinn", input:true},
       {label:"+ Steuern", hint:"Bezahlte Gewinnsteuern dieser Periode", field:"steuern", input:true},
       {label:"= EBT extern", computed:m.map(x=>x.ebtEx)},
     ]},
@@ -392,6 +392,8 @@ function JahreTabelle({ew, setEw, steuersatz, sv}) {
                 </div>
                 {r.input ? active.map((a, i) => {
                   const showSrHint = r.field==="srAkt" && i===0 && svSrSum>0 && String(ew[a.key].srAkt)!==String(svSrSum);
+                  const svJg = sv ? num(sv.jg) : 0;
+                  const showJgHint = r.field==="gewinn" && i===0 && svJg!==0 && String(ew[a.key].gewinn)!==String(svJg);
                   return (
                     <div key={i}>
                       <Inp value={ew[a.key][r.field]} onChange={setField(a.key, r.field)} />
@@ -399,6 +401,12 @@ function JahreTabelle({ew, setEw, steuersatz, sv}) {
                         <button onClick={()=>setField(a.key,"srAkt")(String(svSrSum))}
                           style={{marginTop:3,padding:"0.25rem 0.45rem",background:C.green,border:`1px solid ${C.greenb}`,borderRadius:4,color:C.accent,fontSize:9,letterSpacing:"0.03em",fontFamily:T.mono,cursor:"pointer",width:"100%",textAlign:"left",lineHeight:1.3}}>
                           ↓ Aus Substanzwert: {fmt(svSrSum)}
+                        </button>
+                      )}
+                      {showJgHint && (
+                        <button onClick={()=>setField(a.key,"gewinn")(String(svJg))}
+                          style={{marginTop:3,padding:"0.25rem 0.45rem",background:C.green,border:`1px solid ${C.greenb}`,borderRadius:4,color:C.accent,fontSize:9,letterSpacing:"0.03em",fontFamily:T.mono,cursor:"pointer",width:"100%",textAlign:"left",lineHeight:1.3}}>
+                          ↓ Aus Substanzwert: {fmt(svJg)}
                         </button>
                       )}
                     </div>
