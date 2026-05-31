@@ -926,7 +926,6 @@ function TabMU({mu,setMu,ew,setEw}) {
             <div style={{background:C.bg,borderRadius:5,padding:"0.65rem 0.85rem",fontSize:11,color:C.dim,fontFamily:T.mono,lineHeight:1.8}}>
               {BRANCHEN_MU.find(b=>b.v===mu.branche)?.l} · {MA_KLASSEN.find(m=>m.v===mu.maKl)?.l}
               <br/><span style={{color:C.accent,fontWeight:600,fontSize:"0.95rem"}}>Multiple: {mVors?.toFixed(1)}×</span>
-              <span style={{color:"#b0b3bc"}}> · CH · März 2026 · NIMBO</span>
             </div>
           ):(
             <div style={{background:C.bg,borderRadius:5,padding:"0.65rem 0.85rem",fontSize:11,color:"#b0b3bc",fontFamily:T.mono}}>Branche und Mitarbeiterklasse wählen…</div>
@@ -1608,23 +1607,35 @@ function App() {
       drawLine(M,y,W-M,y,RGB.border);
       y+=7;
       const praktiker=(hatSV&&hatEW)?(2*ewWert+svWert)/3:null;
-      // ─── Zusammenfassung mit Bandbreite-Grafik (nur Vollbericht) ───
+      // Methoden in fester Reihenfolge: 1. Substanz · 2. Ertrag · 3. Praktiker · 4. Multiple
+      const methoden=[
+        {n:1,l:"Substanzwert",s:"Substanz",v:hatSV?svWert:null},
+        {n:2,l:"Ertragswert",s:"Ertrag",v:hatEW?ewWert:null},
+        {n:3,l:"Praktikermethode",s:"Praktiker",v:praktiker},
+        {n:4,l:"Multiple-Methode",s:"Multiple",v:hatMU?muWert:null},
+      ];
+      // ─── Verhandlungsbandbreite (nur Vollbericht) ───
       if(typ!=="substanz"){
-        const methoden=[
-          {l:"Substanzwert (netto)",s:"Substanz",v:hatSV?svWert:null},
-          {l:"Ertragswert (netto)",s:"Ertrag",v:hatEW?ewWert:null},
-          {l:"Praktiker (2×EW + SW) ÷ 3",s:"Praktiker",v:praktiker},
-          {l:"Multiple (EBITC × Multiple)",s:"Multiple",v:hatMU?muWert:null},
-        ];
         const verf=methoden.filter(m=>m.v&&m.v>0);
         if(verf.length>=2){
-          drawSec("Bandbreite — Verhandlungsbasis");
-          checkPage(45);
-          const barX=M, barY=y, barW=CW, barH=10;
+          const barX=M, barW=CW, barH=9;
           const sorted=[...verf].sort((a,b)=>a.v-b.v);
-          const minV=sorted[0].v, maxV=sorted[sorted.length-1].v;
-          const mitte=(minV+maxV)/2;
-          // Gradient: rot → gelb → grün
+          const minV=sorted[0].v, maxV=sorted[sorted.length-1].v, mitte=(minV+maxV)/2;
+          // Beschriftungen gestaffelt versetzen, wenn Markierungen nahe beieinander liegen
+          const lvlX=[];
+          const place=sorted.map(m=>{
+            const pct=maxV>minV?(m.v-minV)/(maxV-minV):0.5;
+            const mx=barX+pct*barW;
+            let lvl=0;
+            while(lvlX[lvl]!==undefined && mx-lvlX[lvl]<24) lvl++;
+            lvlX[lvl]=mx;
+            return {m,mx,lvl};
+          });
+          const maxLvl=place.reduce((a,p)=>Math.max(a,p.lvl),0);
+          checkPage(58+maxLvl*5);
+          drawSec("Verhandlungsbandbreite");
+          const barY=y;
+          // Farbverlauf rot → gelb → grün
           const segs=80;
           for(let i=0;i<segs;i++){
             const t=i/segs;
@@ -1637,30 +1648,30 @@ function App() {
           doc.setDrawColor(180,180,180);
           doc.setLineWidth(0.3);
           doc.rect(barX,barY,barW,barH);
-          // Methoden-Markierungen mit Labels
-          sorted.forEach((m,idx)=>{
-            const pct=maxV>minV?(m.v-minV)/(maxV-minV):0.5;
-            const mx=barX+pct*barW;
+          // Methoden-Markierungen + Kurzlabel (randbündig, gestaffelt)
+          place.forEach(({m,mx,lvl})=>{
             doc.setDrawColor(40,40,40);
-            doc.setLineWidth(0.6);
-            doc.line(mx,barY-2,mx,barY+barH+2);
+            doc.setLineWidth(0.5);
+            doc.line(mx,barY-1.5,mx,barY+barH+1.5);
             setStyle(RGB.text,7,"bold");
-            doc.text(m.s,mx,barY+barH+6.5,{align:"center"});
-            setStyle(RGB.muted,6,"normal");
-            doc.text(fmtChf(m.v).replace("CHF ",""),mx,barY+barH+10,{align:"center"});
+            const ly=barY+barH+5+lvl*4.5;
+            let align="center", tx=mx;
+            if(mx<barX+13){align="left";tx=barX;}
+            else if(mx>barX+barW-13){align="right";tx=barX+barW;}
+            doc.text(m.s,tx,ly,{align});
           });
-          // Min/Mittelwert/Max
-          setStyle(RGB.text,8,"bold");
-          doc.text("Min: "+fmtChf(minV),barX,barY+barH+17);
-          doc.text("Max: "+fmtChf(maxV),barX+barW,barY+barH+17,{align:"right"});
-          setStyle(RGB.accent,9,"bold");
-          doc.text("Mittelwert: "+fmtChf(mitte),barX+barW/2,barY+barH+17,{align:"center"});
-          y=barY+barH+24;
+          const cy=barY+barH+5+(maxLvl+1)*4.5+5;
+          setStyle(RGB.muted,8,"bold");
+          doc.text("Minimum: "+fmtChf(minV),barX,cy);
+          doc.text("Maximum: "+fmtChf(maxV),barX+barW,cy,{align:"right"});
+          setStyle(RGB.accent,9.5,"bold");
+          doc.text("Orientierungswert: "+fmtChf(mitte),barX+barW/2,cy+6,{align:"center"});
+          y=cy+12;
         } else {
           drawSec("Zusammenfassung");
         }
-        // Methoden-Liste
-        methoden.forEach(m=>drawRow(m.l,m.v,{accent:m.v!==null}));
+        // Methoden-Übersicht
+        methoden.forEach(m=>drawRow(`${m.n}. ${m.l}`,m.v,{accent:m.v!==null}));
         y+=4;
       }
       // ─── Stammdaten ───
@@ -1669,9 +1680,9 @@ function App() {
       drawRow("Kanton",ktObj?`${ktObj.k} – ${ktObj.n}`:"–");
       drawRow("Steuersatz",`${steuersatz.toFixed(2)}%`);
       y+=4;
-      // ─── Substanzwert Detail ───
+      // ─── 1. Substanzwert Detail ───
       if(hatSV){
-        drawSec("Substanzwert — Berechnung");
+        drawSec((typ==="substanz"?"":"1. ")+"Substanzwert — Berechnung");
         drawRow("Eigenkapital ohne Jahresgewinn",num(sv.ek));
         if(num(sv.jg)!==0) drawRow("+ Jahresgewinn / -verlust",num(sv.jg));
         const srUV=num(sv.srDelk)+num(sv.srAa)+num(sv.srVor)+num(sv.srForder);
@@ -1682,14 +1693,14 @@ function App() {
         if(srAV>0) drawRow("+ Stille Reserven Anlagevermögen",srAV);
         if(nbZ>0) drawRow("+ Nicht betriebsnotwendiges Vermögen (50%)",nbZ);
         if(ltPassiven>0) drawRow("− Latente Steuern auf Passiven",-ltPassiven,{neg:true});
-        if(ltUV>0) drawRow("− Latente Steuern auf UV",-ltUV,{neg:true});
-        if(ltAV>0) drawRow("− Latente Steuern auf AV",-ltAV,{neg:true});
+        if(ltUV>0) drawRow("− Latente Steuern auf Umlaufvermögen",-ltUV,{neg:true});
+        if(ltAV>0) drawRow("− Latente Steuern auf Anlagevermögen",-ltAV,{neg:true});
         if(num(sv.div)>0) drawRow("− Beschlossene Dividende",-num(sv.div),{neg:true});
         drawTotal("= Substanzwert (netto)",svWert);
       }
-      // ─── Ertragswert Detail (nur Vollbericht) ───
+      // ─── 2. Ertragswert Detail (nur Vollbericht) ───
       if(typ!=="substanz"&&hatEW){
-        drawSec("Ertragswert — Berechnung");
+        drawSec("2. Ertragswert — Berechnung");
         const yr=new Date().getFullYear();
         drawRow(`Effektiver Jahresgewinn Jahr 1 (${yr-1})`,g1);
         if(g2!==null) drawRow(`Effektiver Jahresgewinn Jahr 2 (${yr-2})`,g2);
@@ -1698,9 +1709,17 @@ function App() {
         drawRow("÷ Kapitalisierungszinssatz",`${zEff.toFixed(2)}%`);
         drawTotal("= Ertragswert (netto)",ewWert);
       }
-      // ─── Multiple Detail (nur Vollbericht) ───
+      // ─── 3. Praktikermethode (nur Vollbericht) ───
+      if(typ!=="substanz"&&praktiker!==null){
+        drawSec("3. Praktikermethode — Berechnung");
+        drawRow("2 × Ertragswert",2*ewWert);
+        drawRow("+ 1 × Substanzwert",svWert);
+        drawRow("= Summe",svWert+2*ewWert,{bold:true});
+        drawTotal("= Verkehrswert (Summe ÷ 3)",praktiker);
+      }
+      // ─── 4. Multiple-Methode Detail (nur Vollbericht) ───
       if(typ!=="substanz"&&hatMU){
-        drawSec("Multiple-Methode — Berechnung");
+        drawSec("4. Multiple-Methode — Berechnung");
         drawRow("EBITC (bereinigter EBIT vor Zinsen & Steuern)",ebitc,{bold:true});
         drawRow("× Branchenmultiple",`${mEff.toFixed(1)}×`);
         const bMu=BRANCHEN_MU.find(b=>b.v===mu.branche);
@@ -1708,23 +1727,21 @@ function App() {
         if(bMu&&mMu) drawRow("Branche / Grösse",`${bMu.l} · ${mMu.l}`);
         drawTotal("= Multiple-Wert",muWert);
       }
-      // ─── Praktiker (nur Vollbericht) ───
-      if(typ!=="substanz"&&praktiker!==null){
-        drawSec("Praktikermethode — Berechnung");
-        drawRow("Substanzwert × 1",svWert);
-        drawRow("Ertragswert × 2",2*ewWert);
-        drawRow("Summe ÷ 3",svWert+2*ewWert,{bold:true});
-        drawTotal("= Verkehrswert (Praktiker)",praktiker);
-      }
       // ─── Philosophie & Wichtiger Hinweis ───
-      checkPage(80);
+      checkPage(24);
       y+=6;
       drawSec("Unsere Philosophie & Wichtiger Hinweis");
+      const philosophy="easyValue versteht sich als Werkzeug für eine erste Wertorientierung — als Verhandlungsgrundlage, nicht als rechtlich verbindliche Unternehmensbewertung.\n\nWir nutzen klassische Bewertungsmethoden, die in der Schweizer KMU-Praxis weite Anwendung finden:\n\n• Substanzwert: Wertschätzung auf Basis der bilanziellen Substanz, bereinigt um stille Reserven und latente Steuern.\n• Ertragswert: Kapitalisierung des nachhaltigen Reingewinns mit einem risikoadjustierten Zinssatz.\n• Praktikermethode: In der Schweiz etablierter Standard — gewichtetes Mittel aus zweimal Ertragswert und einmal Substanzwert.\n• Multiple-Methode: Marktorientierter Ansatz auf Basis branchenüblicher Multiplikatoren.\n\nDie ermittelte Bandbreite spiegelt methodisch begründete Unterschiede wider — jede Methode beleuchtet einen anderen Aspekt der Wertfindung. Der Orientierungswert dient als Anhaltspunkt; das tatsächliche Verhandlungsergebnis hängt von vielen weiteren Faktoren ab (Kaufmotive, Marktlage, Verhandlungsposition, Synergien, immaterielle Werte etc.).\n\nFür rechtlich belastbare Bewertungen (z.B. bei Erbschaft, Scheidung oder M&A-Transaktionen) empfehlen wir den Beizug eines zugelassenen Treuhänders oder spezialisierten Bewertungsexperten.\n\neasyvalue.ch — Ihr Unternehmen. Einfach bewertet.";
       setStyle(RGB.muted,8.5,"normal");
-      const philosophy="easyValue versteht sich als Werkzeug für eine erste Wertorientierung — als Verhandlungsgrundlage, nicht als rechtlich verbindliche Unternehmensbewertung.\n\nWir nutzen klassische Bewertungsmethoden, die in der Schweizer KMU-Praxis weite Anwendung finden:\n\n• Substanzwert: Wertschätzung auf Basis der bilanziellen Substanz, bereinigt um stille Reserven und latente Steuern.\n• Ertragswert: Kapitalisierung des nachhaltigen Reingewinns mit einem risikoadjustierten Zinssatz.\n• Praktikermethode: Schweizer Standard nach ESTV-Kreisschreiben Nr. 28 — gewichtetes Mittel aus zweimal Ertragswert und einmal Substanzwert.\n• Multiple-Methode: Marktorientierter Ansatz auf Basis von Branchen-Multiples (Datenbasis NIMBO CH).\n\nDie ermittelte Bandbreite spiegelt methodisch begründete Unterschiede wider — jede Methode beleuchtet einen anderen Aspekt der Wertfindung. Der Mittelwert dient als Orientierung; das tatsächliche Verhandlungsergebnis hängt von vielen weiteren Faktoren ab (Kaufmotive, Marktlage, Verhandlungsposition, Synergien, immaterielle Werte etc.).\n\nFür rechtlich belastbare Bewertungen (z.B. bei Erbschaft, Scheidung, M&A-Transaktionen) empfehlen wir den Beizug eines zugelassenen Treuhänders oder spezialisierten Bewertungsexperten.\n\nDatenquellen: Steuersätze nach PwC Tax Summaries 2025. Branchen-Multiples nach NIMBO CH (März 2026).\n\neasyvalue.ch — Ihr Unternehmen. Einfach bewertet.";
-      const lines=doc.splitTextToSize(philosophy,CW);
-      doc.text(lines,M,y);
-      y+=lines.length*4+6;
+      doc.splitTextToSize(philosophy,CW).forEach(ln=>{
+        if(ln===""){ y+=2.5; return; }
+        checkPage(6);
+        if(ln.startsWith("easyvalue.ch")) setStyle(RGB.accent,8.5,"bold");
+        else setStyle(RGB.muted,8.5,"normal");
+        doc.text(ln,M,y);
+        y+=4;
+      });
+      y+=2;
       // Footer auf jeder Seite
       const totalPages=doc.internal.getNumberOfPages();
       for(let i=1;i<=totalPages;i++){
@@ -1837,7 +1854,7 @@ function App() {
         {modal&&<UpsellModal onClose={()=>setModal(false)} onBuy={()=>{setBezahlt(true);setModal(false);setTab("ertrag");}} />}
 
         <div style={{marginTop:"1.3rem",fontSize:11,color:"#dcdfe6",fontFamily:T.mono,textAlign:"center",lineHeight:1.7}}>
-          Swiss KMU Bewertungstool · Steuersätze: PwC 2025 · Multiples: NIMBO CH März 2026
+          easyValue · Ihr Unternehmen. Einfach bewertet.
         </div>
 
       </div>
